@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    background-color: #FFFBEB;
+    color: black;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .font-nunito {
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .shadow-cartoon {
+    box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+  }
+
+  .shadow-cartoon-sm {
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  }
+
+  .btn-cartoon {
+    font-family: 'Nunito', sans-serif;
+    @apply text-black bg-yellow-400 border-2 border-black rounded-lg px-4 py-2 hover:bg-yellow-500 transition-all duration-200;
+    box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+  }
+
+  /* Button group styles for connected buttons */
+  .btn-group-left {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right-width: 1px !important;
+  }
+  
+  .btn-group-right {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left-width: 1px !important;
+  }
+
+  /* Large slider thumb styles */
+  .leverage-slider {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .leverage-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: #000000;
+    cursor: pointer;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 2px #000000;
+  }
+  
+  .leverage-slider::-moz-range-thumb {
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: #000000;
+    cursor: pointer;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 0 2px #000000;
+  }
+}
