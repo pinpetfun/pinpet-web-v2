@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { config } from '../config';
-import { CurveAMM } from '../utils/curve_amm';
 
 /**
  * @interface KlineData
@@ -78,27 +77,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [klineData, setKlineData] = useState<KlineData[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const subscriptionsRef = useRef<Map<string, SubscriptionConfig>>(new Map()); // 跟踪所有订阅
-
-  /**
-   * 将 u128 格式的价格字符串转换为安全的 JavaScript number
-   * @param priceStr - u128 格式的价格字符串（28位精度）
-   * @returns 转换后的浮点数价格
-   */
-  const convertU128PriceToNumber = useCallback((priceStr: string | number): number => {
-    try {
-      // 如果已经是数字且在安全范围内，直接返回
-      if (typeof priceStr === 'number' && priceStr < 1e15) {
-        return priceStr;
-      }
-
-      // 使用 CurveAMM 工具将 u128 转换为 Decimal，然后转为 number
-      const priceDecimal = CurveAMM.u128ToDecimal(priceStr);
-      return priceDecimal.toNumber();
-    } catch (error) {
-      console.error('价格转换失败:', error, 'priceStr:', priceStr);
-      return 0;
-    }
-  }, []);
 
   // WebSocket连接管理
   const connectSocket = useCallback((): Socket => {
@@ -189,10 +167,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
         const formattedData: KlineData[] = sortedData.map((item: any) => ({
           time: item.time,
-          open: convertU128PriceToNumber(item.open),
-          high: convertU128PriceToNumber(item.high),
-          low: convertU128PriceToNumber(item.low),
-          close: convertU128PriceToNumber(item.close)
+          open: parseFloat(item.open),
+          high: parseFloat(item.high),
+          low: parseFloat(item.low),
+          close: parseFloat(item.close)
         }));
 
         setKlineData(formattedData);
@@ -200,7 +178,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }
     });
 
-    socket.on('kline_data', (data: any) => {
+    socket.on('kline_data', (data: any) => { 
       if (data.data) {
         console.log('🔔 收到实时K线数据:', {
           symbol: data.symbol,
@@ -210,10 +188,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
         const newCandle: KlineData = {
           time: data.data.time,
-          open: convertU128PriceToNumber(data.data.open),
-          high: convertU128PriceToNumber(data.data.high),
-          low: convertU128PriceToNumber(data.data.low),
-          close: convertU128PriceToNumber(data.data.close)
+          open: parseFloat(data.data.open),
+          high: parseFloat(data.data.high),
+          low: parseFloat(data.data.low),
+          close: parseFloat(data.data.close)
         };
 
         setCurrentPrice(newCandle.close);
