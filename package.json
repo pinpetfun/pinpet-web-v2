@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:localhost": "vite --mode localhost",
     "build": "vite build",
-    "build:localhost": "vite build --mode local",
+    "build:localhost": "vite build --mode localhost",
     "lint": "eslint .",
     "preview": "vite preview"
   },
