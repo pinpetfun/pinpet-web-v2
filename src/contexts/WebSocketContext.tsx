@@ -178,7 +178,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }
     });
 
-    socket.on('kline_data', (data: any) => {
+    socket.on('kline_data', (data: any) => { 
       if (data.data) {
         console.log('🔔 收到实时K线数据:', {
           symbol: data.symbol,

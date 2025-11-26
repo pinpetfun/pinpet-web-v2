@@ -229,10 +229,15 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
   // 获取 Mint 信息
   const fetchMintInfo = useCallback(async (mintAddr: string): Promise<any> => {
-    if (!mintAddr || !config.pinpetApiUrl) {
-      console.log('[TradingData] No mint address or API URL for mint info fetch');
+    if (!mintAddr) {
+      console.log('[TradingData] No mint address for mint info fetch');
       setMintInfo(null);
       return Promise.resolve(null);
+    }
+
+    if (!sdk || !isReady) {
+      console.warn('[TradingData] SDK not ready, skipping mint info fetch');
+      return null;
     }
 
     try {
@@ -241,28 +246,13 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
       console.log(`[TradingData] Fetching mint info for mint: ${mintAddr}`);
 
-      const response = await fetch(`${config.pinpetApiUrl}/api/details`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          mints: [mintAddr]
-        })
-      });
+      // 使用 SDK 的 fast.mint_info() 方法
+      const result = await sdk.fast.mint_info(mintAddr);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data && result.data.details && result.data.details.length > 0) {
-        const mintData = result.data.details[0];
-        console.log(`[TradingData] Mint info fetched successfully:`, mintData);
-        setMintInfo(mintData);
-        return mintData;
+      if (result.code === 200 && result.data) {
+        console.log(`[TradingData] Mint info fetched successfully:`, result.data);
+        setMintInfo(result.data);
+        return result.data;
       } else {
         console.warn(`[TradingData] No mint info found for: ${mintAddr}`);
         setMintInfo(null);
@@ -270,14 +260,14 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       }
 
     } catch (err) {
-      console.error('获取 Mint 信息失败:', err);
+      console.error('获取 mintInfo 失败:', err);
       setMintInfoError(err as Error);
       setMintInfo(null);
       return Promise.reject(err);
     } finally {
       setMintInfoLoading(false);
     }
-  }, []);
+  }, [sdk, isReady]);
 
   // 检查是否应该跳过请求（因为错误太多或太频繁）
   const shouldSkipRequest = useCallback((force: boolean = false, isUserAction: boolean = false): boolean => {
