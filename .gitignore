@@ -32,3 +32,5 @@ example/
 
 
 .env_local
+.env
+.env.localhost

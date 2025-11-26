@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TokenCard } from '../common';
-import { fetchFeaturedTokens } from '../../services/featuredTokensService';
+import { fetchFeaturedTokens } from '../../services/tokenListService';
 
 const FeaturedTokens = () => {
   const [featuredTokens, setFeaturedTokens] = useState([]);
