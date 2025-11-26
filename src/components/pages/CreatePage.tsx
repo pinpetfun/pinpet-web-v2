@@ -188,31 +188,31 @@ const CreatePage = () => {
     }
   };
 
-  // 创建代币到链上
+  // 创建代币到链上（更新以适配新的 SDK 2.0 接口）
   const createTokenOnChain = async (metadataUri) => {
     try {
       // 验证前置条件
       if (!connected) {
         throw new Error('钱包未连接，请先连接钱包');
       }
-      
+
       if (!isReady) {
         throw new Error('SDK 未准备好，请稍后再试');
       }
-      
+
       if (!walletAddress) {
         throw new Error('无法获取钱包地址');
       }
-      
+
       setTokenCreationStatus('creating');
       setErrorMessage('');
       setUploadStatus('Creating token on blockchain...');
-      
+
       // 生成新的 mint keypair
       const mintKeypair = Keypair.generate();
       console.log('Generated mint keypair:', mintKeypair.publicKey.toString());
-      
-      // 准备代币创建参数
+
+      // 准备代币创建参数（符合新接口）
       const tokenParams = {
         mint: mintKeypair,
         name: formData.coinName,
@@ -220,7 +220,7 @@ const CreatePage = () => {
         uri: metadataUri,
         payer: new PublicKey(walletAddress)
       };
-      
+
       console.log('Creating token with params:', {
         mint: mintKeypair.publicKey.toString(),
         name: tokenParams.name,
@@ -228,39 +228,52 @@ const CreatePage = () => {
         uri: tokenParams.uri,
         payer: tokenParams.payer.toString()
       });
-      
+
       // 调用 SDK 创建代币交易
       setUploadStatus('Preparing transaction...');
       const result = await sdk.token.create(tokenParams);
-      
-      console.log('Token creation transaction prepared:', result);
-      
-      // 获取最新的 blockhash
+
+      console.log('Token creation result:', {
+        hasTransaction: !!result.transaction,
+        signersCount: result.signers?.length || 0,
+        accounts: result.accounts
+      });
+
+      // 获取最新的 blockhash 并设置交易参数
       setUploadStatus('Getting recent blockhash...');
       const connection = getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
-      
+
       console.log('Transaction updated with blockhash:', blockhash);
-      
-      // 处理签名和发送交易
+
+      // 按照新接口推荐的签名顺序：先 mint keypair 签名，再钱包签名
+      setUploadStatus('Signing transaction...');
+
+      // 1. 先用 mint keypair 签名（如果有额外的签名者）
+      if (result.signers && result.signers.length > 0) {
+        console.log('Signing with mint keypair...');
+        result.transaction.partialSign(...result.signers);
+      }
+
+      // 2. 再用钱包签名
       setUploadStatus('Requesting wallet signature...');
-      
-      // 先用钱包签名
       const signedTransaction = await signTransaction(result.transaction);
-      
-      // 再用 mint keypair 签名
-      signedTransaction.partialSign(mintKeypair);
-      
+
       // 发送交易
       setUploadStatus('Sending transaction...');
-      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
-      
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed'
+      });
+
+      console.log('Transaction sent:', signature);
+
       // 等待交易确认
       setUploadStatus('Waiting for confirmation...');
       await connection.confirmTransaction(signature, 'confirmed');
-      
+
       // 成功处理
       setTokenCreationStatus('success');
       setTransactionHash(signature);
@@ -268,21 +281,25 @@ const CreatePage = () => {
         mintAddress: mintKeypair.publicKey.toString(),
         name: formData.coinName,
         symbol: formData.ticker,
-        signature: signature
+        signature: signature,
+        accounts: result.accounts // 保存新接口返回的账户信息
       });
       setUploadStatus('Token created successfully!');
       setCountdown(3); // 重置倒计时
-      
+
       console.log('=== Token Creation Success ===');
       console.log('Mint Address:', mintKeypair.publicKey.toString());
       console.log('Transaction Signature:', signature);
       console.log('Explorer URL:', generateTxExplorerUrl(signature));
+      console.log('Curve Account:', result.accounts?.curveAccount?.toString());
+      console.log('Pool Token Account:', result.accounts?.poolTokenAccount?.toString());
+      console.log('Metadata Account:', result.accounts?.metadataAccount?.toString());
       console.log('============================');
-      
+
     } catch (error) {
       console.error('Token creation failed:', error);
       setTokenCreationStatus('error');
-      
+
       // 用户友好的错误消息
       let friendlyMessage = error.message;
       if (error.message.includes('User rejected')) {
@@ -291,8 +308,10 @@ const CreatePage = () => {
         friendlyMessage = 'Insufficient SOL balance to create token. Please add more SOL to your wallet.';
       } else if (error.message.includes('blockhash')) {
         friendlyMessage = 'Network error: Failed to get recent blockhash. Please try again.';
+      } else if (error.message.includes('SDK paramsAccount not configured')) {
+        friendlyMessage = 'SDK configuration error: paramsAccount not set. Please contact support.';
       }
-      
+
       setErrorMessage(friendlyMessage);
       setUploadStatus(`Token creation failed: ${friendlyMessage}`);
     }
