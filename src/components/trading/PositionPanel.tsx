@@ -119,44 +119,116 @@ const PositionPanel = ({ mintAddress = null }) => {
       setIsLoading(true);
       setError(null);
 
-      const apiUrl = `${config.pinpetApiUrl}/api/user_orders?user=${walletAddress}&page=1&limit=1000&order_by=start_time_desc`;
-      
-      console.log('🚨🚨🚨 [PositionPanel] 正在调用的API URL:', apiUrl);
-      console.log('🚨🚨🚨 [PositionPanel] config.pinpetApiUrl:', config.pinpetApiUrl);
-      console.log('🚨🚨🚨 [PositionPanel] walletAddress:', walletAddress);
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'accept': 'application/json'
+      // ✅ 新接口: 获取用户活跃订单 (一次性获取1000条)
+      const ordersUrl = `${config.pinpetApiUrl}/api/orderbook/user/${walletAddress}/active?page=1&page_size=1000`;
+
+      console.log('[PositionPanel] 正在调用的API URL:', ordersUrl);
+      console.log('[PositionPanel] config.pinpetApiUrl:', config.pinpetApiUrl);
+      console.log('[PositionPanel] walletAddress:', walletAddress);
+
+      const ordersResponse = await fetch(ordersUrl, {
+        headers: { 'accept': 'application/json' }
+      });
+
+      if (!ordersResponse.ok) {
+        throw new Error(`HTTP error! status: ${ordersResponse.status}`);
+      }
+
+      const ordersResult = await ordersResponse.json();
+
+      console.log('[PositionPanel] 订单接口响应:', {
+        code: ordersResult.code,
+        message: ordersResult.message,
+        订单数量: ordersResult.data?.orders?.length || 0
+      });
+
+      // 检查响应格式 (兼容 code: 200/0 和 success: true 两种格式)
+      const isSuccess = ordersResult.code === 200 || ordersResult.code === 0 || ordersResult.success === true;
+      if (!isSuccess) {
+        throw new Error(ordersResult.message || 'Invalid response format');
+      }
+
+      const orders = ordersResult.data?.orders || [];
+
+      if (orders.length === 0) {
+        console.log('[PositionPanel] 没有活跃订单');
+        setPositions([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // 提取唯一的 mint 地址
+      const uniqueMints = [...new Set(orders.map(o => o.mint))];
+
+      console.log('[PositionPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
+
+      // 批量获取 Token 详情
+      const tokensData = await Promise.all(
+        uniqueMints.map(async (mint) => {
+          try {
+            const tokenUrl = `${config.pinpetApiUrl}/api/tokens/mint/${mint}`;
+            const response = await fetch(tokenUrl, {
+              headers: { 'accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+              console.warn(`[PositionPanel] Token ${mint} 获取失败: ${response.status}`);
+              return null;
+            }
+
+            const result = await response.json();
+
+            // 兼容 code: 200/0 两种格式
+            if (result.code !== 200 && result.code !== 0) {
+              console.warn(`[PositionPanel] Token ${mint} 响应错误: ${result.message}`);
+              return null;
+            }
+
+            return result.data;
+          } catch (error) {
+            console.error(`[PositionPanel] Token ${mint} 请求失败:`, error);
+            return null;
+          }
+        })
+      );
+
+      // 创建 mint -> tokenData 映射
+      const tokenMap = {};
+      tokensData.forEach((tokenData, index) => {
+        if (tokenData) {
+          tokenMap[uniqueMints[index]] = tokenData;
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // 先获取原始文本，检查大数字精度问题
-      const textResponse = await response.text();
-      console.log('[PositionPanel] 🔍 原始JSON文本中的latest_price:', {
-        原始JSON片段: textResponse.substring(textResponse.indexOf('"latest_price"'), textResponse.indexOf('"latest_price"') + 50),
-        完整JSON长度: textResponse.length
-      });
-      
-      const result = JSON.parse(textResponse);
-      console.log('[PositionPanel] 🔍 JSON解析后的数据调试:', {
-        JSON解析后的latest_price: result.data?.orders?.[0]?.latest_price,
-        数据类型: typeof result.data?.orders?.[0]?.latest_price,
-        JavaScript安全整数最大值: Number.MAX_SAFE_INTEGER
+      console.log('[PositionPanel] Token数据获取完成:', {
+        请求数量: uniqueMints.length,
+        成功数量: Object.keys(tokenMap).length,
+        失败数量: uniqueMints.length - Object.keys(tokenMap).length
       });
 
-      if (result.success && result.data && result.data.orders) {
-        const transformedPositions = transformApiData(result.data.orders);
-        //console.log('[PositionPanel] Transformed positions:', transformedPositions);
-        setPositions(transformedPositions);
-      } else {
-        console.warn('[PositionPanel] Invalid API response format:', result);
-        setPositions([]);
-      }
+      // 合并订单数据和 Token 数据
+      const enrichedOrders = orders.map(order => {
+        const tokenData = tokenMap[order.mint];
+
+        if (!tokenData) {
+          console.warn(`[PositionPanel] Token数据缺失 mint: ${order.mint}`);
+        }
+
+        return {
+          ...order,
+          // 补充缺失字段
+          order_pda: `${order.mint}_${order.order_id}`, // 自定义唯一标识
+          symbol: tokenData?.symbol || 'UNKNOWN',
+          name: tokenData?.name || 'Unknown Token',
+          image: tokenData?.uri_data?.image || null,
+          latest_price: tokenData?.latest_price || '0',
+          latest_trade_time: tokenData?.updated_at || Math.floor(Date.now() / 1000),
+        };
+      });
+
+      const transformedPositions = transformApiData(enrichedOrders);
+      console.log('[PositionPanel] 转换后的持仓数量:', transformedPositions.length);
+      setPositions(transformedPositions);
 
     } catch (error) {
       console.error('[PositionPanel] Failed to fetch positions:', error);
