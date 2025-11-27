@@ -10,6 +10,11 @@ import { TradingToast } from '../common';
 import { getEmojiImage } from '../../config/emojiConfig';
 
 const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, onRefresh }) => {
+  // 🔍 调试：打印完整的 position 对象
+  console.log('[PartialCloseDialog] 🔍 完整 position 对象:', position);
+  console.log('[PartialCloseDialog] 🔍 position.order_id:', position?.order_id);
+  console.log('[PartialCloseDialog] 🔍 position 所有键:', Object.keys(position || {}));
+
   // SDK 和钱包 hooks
   const { sdk, isReady } = usePinPetSdk();
   const { walletAddress, connected } = useWalletContext();
@@ -18,13 +23,13 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
   // 输入状态
   const [buyAmount, setBuyAmount] = useState('');
   const [error, setError] = useState('');
-  
+
   // 计算状态
   const [estimatedReceive, setEstimatedReceive] = useState('0.000000000');
-  
+
   // 交易状态
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // 提示框状态
   const [toast, setToast] = useState({
     isVisible: false,
@@ -47,7 +52,9 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
     _profitDisplay,
     lock_lp_token_amount,
     lock_lp_sol_amount,
-    mint
+    mint,
+    order_id,  // 新增：订单ID
+    user       // 新增：订单创建者地址
   } = position || {};
 
   // 显示提示框
@@ -208,8 +215,8 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       return;
     }
 
-    if (!order_pda_full) {
-      showToast('error', 'Order address not found');
+    if (!order_id) {
+      showToast('error', 'Order ID not found');
       return;
     }
 
@@ -224,7 +231,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         orderType: order_type,
         direction,
         mint,
-        orderPda: order_pda_full,
+        orderId: order_id,
         partialAmount: amount,
         lockLpTokenAmount: lock_lp_token_amount,
         lockLpSolAmount: lock_lp_sol_amount
@@ -238,24 +245,53 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       });
 
       let result;
-      
+      let closeOrderIndices;
+
       if (order_type === 1) { // Long partial close
         console.log('[PartialCloseDialog] Executing Long partial close...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateLongClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PartialCloseDialog] 做多平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PartialCloseDialog] 生成做多平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeLong({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           sellTokenAmount: new anchor.BN(rawTokenAmount.toString()),
           minSolOutput: new anchor.BN("0"),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       } else { // Short partial close
         console.log('[PartialCloseDialog] Executing Short partial close...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateShortClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PartialCloseDialog] 做空平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PartialCloseDialog] 生成做空平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeShort({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           buyTokenAmount: new anchor.BN(rawTokenAmount.toString()),
           maxSolAmount: new anchor.BN(lock_lp_sol_amount.toString()),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       }
 

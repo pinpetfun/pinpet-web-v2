@@ -17,6 +17,11 @@ interface PositionItemProps {
 }
 
 const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }: PositionItemProps) => {
+  // 🔍 调试：打印完整的 position 对象
+  console.log('[PositionItem] 🔍 完整 position 对象:', position);
+  console.log('[PositionItem] 🔍 position.order_id:', position?.order_id);
+  console.log('[PositionItem] 🔍 position 所有键:', Object.keys(position || {}));
+
   const {
     tokenImage,
     pair,
@@ -34,7 +39,9 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
     _margin_sol_amount,
     margin_init_sol_amount,
     stopLossPercentage,
-    realized_sol_amount
+    realized_sol_amount,
+    order_id,  // 新增：订单ID
+    user       // 新增：订单创建者地址
   } = position;
 
   // SDK 和钱包 hooks
@@ -161,8 +168,8 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
       return;
     }
 
-    if (!order_pda_full) {
-      showToast('error', 'Order address not found');
+    if (!order_id) {
+      showToast('error', 'Order ID not found');
       return;
     }
 
@@ -172,30 +179,59 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
         orderType: order_type,
         direction,
         mint,
-        orderPda: order_pda_full,
+        orderId: order_id,
         lockLpTokenAmount: lock_lp_token_amount,
         lockLpSolAmount: lock_lp_sol_amount
       });
 
       let result;
-      
+      let closeOrderIndices;
+
       if (order_type === 1) { // Long 平仓
         console.log('[PositionItem] 执行 Long 平仓...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateLongClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PositionItem] 做多平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PositionItem] 生成做多平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeLong({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           sellTokenAmount: new anchor.BN(lock_lp_token_amount.toString()),
           minSolOutput: new anchor.BN("0"),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       } else { // Short 平仓
         console.log('[PositionItem] 执行 Short 平仓...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateShortClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PositionItem] 做空平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PositionItem] 生成做空平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeShort({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           buyTokenAmount: new anchor.BN(lock_lp_token_amount.toString()),
           maxSolAmount: new anchor.BN(lock_lp_sol_amount.toString()),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       }
 

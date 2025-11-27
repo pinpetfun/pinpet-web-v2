@@ -66,7 +66,10 @@ const PositionPanel = ({ mintAddress = null }) => {
       const stopLossPercentage = profitResult ? profitResult.stopLossPercentage : null;
       const profitDisplay = formatProfitPercentage(profitPercentage);
 
-      return {
+      // 🔍 调试：检查 order_id 在转换前
+      console.log('[PositionPanel transformApiData] 🔍 转换前 order.order_id:', order.order_id);
+
+      const transformedPosition = {
         // UI显示字段（保持现有逻辑）
         id: order.order_pda,
         tokenSymbol: order.symbol,
@@ -75,15 +78,16 @@ const PositionPanel = ({ mintAddress = null }) => {
         direction: order.order_type === 1 ? 'long' : 'short',
         orderPda: order.order_pda.slice(0, 6),
         mint: order.mint, // 保留 mint 字段用于过滤
-        
+
         // 新增盈亏相关字段
         profitPercentage: profitPercentage,
         profitDisplay: profitDisplay,
         netProfit: netProfit,
         grossProfit: grossProfit,
         stopLossPercentage: stopLossPercentage,
-        
+
         // 完整的 order 数据（保留所有字段以备后用）
+        order_id: order.order_id, // ✅ 新增：订单ID（用于新版平仓接口）
         order_type: order.order_type,
         user: order.user,
         lock_lp_start_price: order.lock_lp_start_price,
@@ -105,6 +109,11 @@ const PositionPanel = ({ mintAddress = null }) => {
         symbol: order.symbol,
         image: order.image // 原始图片URL
       };
+
+      // 🔍 调试：检查转换后的 order_id
+      console.log('[PositionPanel transformApiData] 🔍 转换后 transformedPosition.order_id:', transformedPosition.order_id);
+
+      return transformedPosition;
     });
   }, [isReady, sdk]);
 
@@ -213,6 +222,11 @@ const PositionPanel = ({ mintAddress = null }) => {
         if (!tokenData) {
           console.warn(`[PositionPanel] Token数据缺失 mint: ${order.mint}`);
         }
+
+        // 🔍 调试：检查原始 order 对象
+        console.log('[PositionPanel] 🔍 原始 API order 对象:', order);
+        console.log('[PositionPanel] 🔍 order.order_id:', order.order_id);
+        console.log('[PositionPanel] 🔍 order 所有键:', Object.keys(order));
 
         return {
           ...order,
