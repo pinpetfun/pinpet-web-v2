@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { LightBulbIcon } from '@heroicons/react/24/outline';
-import { TradingChart, TokenInfo, TradingPanel, TokenInfoTabs, PositionPanel } from '../trading';
+import { TradingChart, TokenInfo, TradingPanel, TokenInfoTabs, PositionPanel, ClosedOrdersPanel } from '../trading';
 import { WebSocketDebug, ConfigDebug } from '../common';
 
 const TradeCenterPage = () => {
@@ -41,6 +41,7 @@ const TradeCenterPage = () => {
           <div>
             <TradingPanel mintAddress={mintAddress} />
             <PositionPanel mintAddress={mintAddress} />
+            <ClosedOrdersPanel mintAddress={mintAddress} />
           </div>
         </div>
       </main>
