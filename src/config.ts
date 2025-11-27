@@ -44,6 +44,15 @@ export const config: AppConfig = {
   }
 }
 
+// 临时调试：打印当前加载的环境变量
+console.log('🔍 Environment Debug:', {
+  MODE: import.meta.env.MODE,
+  VITE_SOLANA_RPC_URL: import.meta.env.VITE_SOLANA_RPC_URL,
+  VITE_SOLANA_NETWORKS: import.meta.env.VITE_SOLANA_NETWORKS,
+  VITE_PINPET_API_URL: import.meta.env.VITE_PINPET_API_URL,
+  VITE_SPINPET_API_URL: import.meta.env.VITE_SPINPET_API_URL,
+})
+
 // 验证必需的环境变量
 if (!config.serverUrl) {
   throw new Error('VITE_SERVER_URL is required')

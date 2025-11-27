@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchHotProjects } from '../../services/hotProjectsService';
+import { fetchHotProjects } from '../../services/tokenListService';
 import { FireIcon } from '@heroicons/react/24/outline';
 import { getTokenEmojiImage, getCircleEmojiImage } from '../../config/emojiConfig';
 
