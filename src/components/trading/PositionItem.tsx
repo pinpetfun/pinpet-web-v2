@@ -168,8 +168,9 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
       return;
     }
 
-    if (!order_id) {
+    if (order_id === undefined || order_id === null) {
       showToast('error', 'Order ID not found');
+      console.log("order_id=",order_id)
       return;
     }
 

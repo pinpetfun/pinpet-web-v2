@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AdjustmentsHorizontalIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import ClosedOrderItem from './ClosedOrderItem';
+import { useWalletContext } from '../../contexts/WalletContext';
+import { config, convertIpfsUrl } from '../../config';
+import { getEmojiImage } from '../../config/emojiConfig';
 
 const ClosedOrdersPanel = ({ mintAddress = null }) => {
   // 从 localStorage 读取过滤模式，默认为 "all"
@@ -15,49 +18,175 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
   const [filterMode, setFilterMode] = useState(getInitialFilterMode());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [closedOrders, setClosedOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // TODO: 这里将来需要从API获取已关闭的订单数据
-  // 目前使用模拟数据展示UI
-  const mockClosedOrders = [
-    {
-      id: '1',
-      tokenSymbol: 'PEPE',
-      tokenImage: 'https://via.placeholder.com/40',
-      direction: 'long',
-      closeTime: '2025-11-27 14:30:00',
-      margin: '1.50',
-      profitPercentage: 15.8,
-      profitAmount: '0.237',
-      closeReason: 'manual', // manual, stop_loss, take_profit
-      mint: 'ABC123...'
-    },
-    {
-      id: '2',
-      tokenSymbol: 'DOGE',
-      tokenImage: 'https://via.placeholder.com/40',
-      direction: 'short',
-      closeTime: '2025-11-27 13:15:00',
-      margin: '2.00',
-      profitPercentage: -8.5,
-      profitAmount: '-0.170',
-      closeReason: 'stop_loss',
-      mint: 'DEF456...'
-    },
-    {
-      id: '3',
-      tokenSymbol: 'SHIB',
-      tokenImage: 'https://via.placeholder.com/40',
-      direction: 'long',
-      closeTime: '2025-11-27 12:00:00',
-      margin: '0.80',
-      profitPercentage: 22.3,
-      profitAmount: '0.178',
-      closeReason: 'take_profit',
-      mint: 'GHI789...'
+  // 获取钱包地址
+  const { walletAddress, connected } = useWalletContext();
+
+  // 转换API数据到UI格式 (需要传入 tokenMap)
+  const transformApiData = useCallback((apiRecords, tokenMap = {}) => {
+    return apiRecords.map((record) => {
+      const { order, close_info, mint } = record;
+
+      // 获取 Token 信息
+      const tokenData = tokenMap[mint];
+
+      // 关闭原因映射 (根据API文档: 1=manual, 2=stop_loss, 3=take_profit)
+      const closeReasonMap = {
+        1: 'manual',
+        2: 'stop_loss',
+        3: 'take_profit'
+      };
+
+      // 计算盈亏百分比 = (final_pnl_sol / margin_init_sol_amount) * 100
+      const profitPercentage = order.margin_init_sol_amount > 0
+        ? (close_info.final_pnl_sol / order.margin_init_sol_amount) * 100
+        : 0;
+
+      // 将 lamports 转换为 SOL
+      const marginSol = (order.margin_init_sol_amount / 1_000_000_000).toFixed(4);
+      const profitSol = (close_info.final_pnl_sol / 1_000_000_000).toFixed(4);
+
+      // 格式化关闭时间
+      const closeTime = new Date(close_info.close_timestamp * 1000).toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
+      return {
+        id: `${mint}_${order.order_id}`,
+        tokenSymbol: tokenData?.symbol || 'UNKNOWN',
+        tokenImage: convertIpfsUrl(tokenData?.uri_data?.image) || getEmojiImage('default', 40),
+        direction: order.order_type === 1 ? 'long' : 'short',
+        closeTime: closeTime,
+        margin: marginSol,
+        profitPercentage: profitPercentage,
+        profitAmount: profitSol,
+        closeReason: closeReasonMap[close_info.close_reason] || 'manual',
+        mint: mint,
+
+        // 保留原始数据以备后用
+        rawOrder: order,
+        rawCloseInfo: close_info,
+        tokenData: tokenData
+      };
+    });
+  }, []);
+
+  // 获取历史订单数据
+  const fetchClosedOrders = useCallback(async () => {
+    if (!connected || !walletAddress) {
+      setClosedOrders([]);
+      return;
     }
-  ];
 
-  const [closedOrders] = useState(mockClosedOrders);
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const historyUrl = `${config.pinpetApiUrl}/api/orderbook/user/${walletAddress}/history?page=1&page_size=1000`;
+
+      console.log('[ClosedOrdersPanel] 正在调用的API URL:', historyUrl);
+      console.log('[ClosedOrdersPanel] walletAddress:', walletAddress);
+
+      const response = await fetch(historyUrl, {
+        headers: { 'accept': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      console.log('[ClosedOrdersPanel] 历史订单接口响应:', {
+        code: result.code,
+        msg: result.msg,
+        订单数量: result.data?.records?.length || 0
+      });
+
+      // 检查响应格式
+      if (result.code !== 200) {
+        throw new Error(result.msg || 'Invalid response format');
+      }
+
+      const records = result.data?.records || [];
+
+      if (records.length === 0) {
+        console.log('[ClosedOrdersPanel] 没有历史订单');
+        setClosedOrders([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // 提取唯一的 mint 地址
+      const uniqueMints = [...new Set(records.map(r => r.mint))];
+
+      console.log('[ClosedOrdersPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
+
+      // 批量获取 Token 详情
+      const tokensData = await Promise.all(
+        uniqueMints.map(async (mint) => {
+          try {
+            const tokenUrl = `${config.pinpetApiUrl}/api/tokens/mint/${mint}`;
+            const response = await fetch(tokenUrl, {
+              headers: { 'accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+              console.warn(`[ClosedOrdersPanel] Token ${mint} 获取失败: ${response.status}`);
+              return null;
+            }
+
+            const result = await response.json();
+
+            // 兼容 code: 200/0 两种格式
+            if (result.code !== 200 && result.code !== 0) {
+              console.warn(`[ClosedOrdersPanel] Token ${mint} 响应错误: ${result.message}`);
+              return null;
+            }
+
+            return result.data;
+          } catch (error) {
+            console.error(`[ClosedOrdersPanel] Token ${mint} 请求失败:`, error);
+            return null;
+          }
+        })
+      );
+
+      // 创建 mint -> tokenData 映射
+      const tokenMap = {};
+      tokensData.forEach((tokenData, index) => {
+        if (tokenData) {
+          tokenMap[uniqueMints[index]] = tokenData;
+        }
+      });
+
+      console.log('[ClosedOrdersPanel] Token数据获取完成:', {
+        请求数量: uniqueMints.length,
+        成功数量: Object.keys(tokenMap).length,
+        失败数量: uniqueMints.length - Object.keys(tokenMap).length
+      });
+
+      const transformedOrders = transformApiData(records, tokenMap);
+      console.log('[ClosedOrdersPanel] 转换后的历史订单数量:', transformedOrders.length);
+      setClosedOrders(transformedOrders);
+
+    } catch (error) {
+      console.error('[ClosedOrdersPanel] Failed to fetch closed orders:', error);
+      setError(error.message);
+      setClosedOrders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [connected, walletAddress, transformApiData]);
 
   // 处理过滤模式切换
   const handleFilterToggle = () => {
@@ -90,10 +219,27 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
   const displayedOrders = getFilteredOrders();
 
+  // 组件挂载和钱包连接变化时获取数据
+  useEffect(() => {
+    fetchClosedOrders();
+  }, [fetchClosedOrders]);
+
+  // 10秒循环获取数据
+  useEffect(() => {
+    if (!connected || !walletAddress) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      fetchClosedOrders();
+    }, 10000); // 10秒
+
+    return () => clearInterval(interval);
+  }, [connected, walletAddress, fetchClosedOrders]);
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // TODO: 调用API刷新数据
-    console.log('[ClosedOrdersPanel] Refreshing closed orders...');
+    await fetchClosedOrders();
     setTimeout(() => {
       setIsRefreshing(false);
     }, 500);
@@ -125,7 +271,30 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
       {/* 订单列表区域 */}
       <div className="p-4 space-y-4">
-        {displayedOrders.length === 0 ? (
+        {isLoading && closedOrders.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-2xl mb-2">⏳</div>
+            <div className="font-nunito text-lg">Loading Closed Orders...</div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">
+            <div className="text-2xl mb-2">❌</div>
+            <div className="font-nunito text-lg">Failed to Load</div>
+            <div className="text-sm mt-1">{error}</div>
+            <button
+              onClick={handleRefresh}
+              className="mt-2 px-4 py-2 bg-red-500 text-white rounded font-nunito text-sm hover:bg-red-600"
+            >
+              Retry
+            </button>
+          </div>
+        ) : !connected ? (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-3xl mb-2">🔌</div>
+            <div className="font-nunito text-lg">Connect Wallet</div>
+            <div className="text-sm mt-1">Please connect your wallet to view closed orders</div>
+          </div>
+        ) : displayedOrders.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <div className="text-3xl mb-2">📋</div>
             <div className="font-nunito text-lg">No Closed Orders</div>

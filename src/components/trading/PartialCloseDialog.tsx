@@ -215,7 +215,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       return;
     }
 
-    if (!order_id) {
+    if (order_id === undefined || order_id === null) {
       showToast('error', 'Order ID not found');
       return;
     }
