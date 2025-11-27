@@ -341,10 +341,8 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         }, 2000); // 2 seconds delay to refresh data
       }
 
-      // Auto close dialog after success toast is shown
-      setTimeout(() => {
-        handleClose();
-      }, 3000); // Close after 3 seconds to let user see the success message
+      // Note: Dialog will stay open so user can see the success message and close manually
+      // They can click X button, click outside, or press ESC to close
 
     } catch (error) {
       console.error('[PartialCloseDialog] Partial close failed:', error);
@@ -416,22 +414,24 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
   if (!isOpen || !position) return null;
 
   const modalContent = (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9999
-      }}
-      onClick={handleOverlayClick}
-    >
-      <div className="bg-white rounded-lg shadow-cartoon w-full max-w-md p-6 space-y-4 relative">
+    <>
+      {/* Dialog Overlay and Content */}
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999
+        }}
+        onClick={handleOverlayClick}
+      >
+        <div className="bg-white rounded-lg shadow-cartoon w-full max-w-md p-6 space-y-4 relative">
         {/* 关闭按钮 */}
         <button 
           onClick={handleClose}
@@ -535,9 +535,10 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         >
           {isProcessing ? 'Closing...' : 'Close'}
         </button>
+        </div>
       </div>
-      
-      {/* 交易结果提示框 */}
+
+      {/* 交易结果提示框 - 独立的 Portal，不受 Dialog 关闭影响 */}
       <TradingToast
         isVisible={toast.isVisible}
         type={toast.type}
@@ -545,7 +546,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         txHash={toast.txHash}
         onClose={closeToast}
       />
-    </div>
+    </>
   );
 
   return createPortal(modalContent, document.body);
