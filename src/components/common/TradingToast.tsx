@@ -36,11 +36,12 @@ const TradingToast = ({ isVisible, type, message, txHash, onClose }) => {
   const isError = type === 'error';
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 transition-all duration-300 transform ${
+    <div className={`fixed bottom-4 right-4 transition-all duration-300 transform ${
       isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-    }`}>
+    }`}
+    style={{ zIndex: 99999 }}>
       <div className={`
-        max-w-sm w-80 p-4 border-4 border-black rounded-2xl cartoon-shadow
+        relative max-w-sm w-80 p-4 border-4 border-black rounded-2xl cartoon-shadow
         ${isSuccess ? 'bg-green-100' : isError ? 'bg-red-100' : 'bg-blue-100'}
       `}>
         {/* 关闭按钮 */}
@@ -52,7 +53,7 @@ const TradingToast = ({ isVisible, type, message, txHash, onClose }) => {
               onClose();
             }, 300);
           }}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold"
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold leading-none w-6 h-6 flex items-center justify-center"
         >
           ×
         </button>

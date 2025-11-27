@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { calculateTokensFromSOL, formatDisplayNumber } from '../../utils/priceCalculator';
+import { formatDisplayNumber } from '../../utils/priceCalculator';
 import { Decimal } from 'decimal.js';
 import { usePinPetSdk } from '../../contexts/PinPetSdkContext';
 import { useWalletContext } from '../../contexts/WalletContext';
@@ -28,7 +28,7 @@ const LongPanel = React.memo(({
   onQuickActionRefresh = () => {}, // 新增：快捷操作刷新回调
   tradingData = {}
 }: LongPanelProps) => {
-  const { downOrders1000, lastPrice, loading } = tradingData;
+  const { loading } = tradingData; // ✅ 不再需要 downOrders1000 和 lastPrice
   const [amount, setAmount] = useState('1');
   const [leverage, setLeverage] = useState(2.0);
   const [stopLoss] = useState(30);
@@ -83,13 +83,15 @@ const LongPanel = React.memo(({
     setToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  // Calculate how many tokens user will receive with leverage using precise decimal calculation
-  const calculateTokens = (solAmount) => {
-    if (!lastPrice) return '0';
-    const numAmount = parseFloat(solAmount) || 0;
-    const leveragedAmount = numAmount * leverage;
-    const tokensAmount = calculateTokensFromSOL(leveragedAmount.toString(), lastPrice);
-    return formatDisplayNumber(tokensAmount, 6);
+  // ✅ 获取显示用的代币数量 - 直接使用 SDK 返回值
+  const getDisplayTokens = () => {
+    if (stopLossAnalysis?.buyTokenAmount) {
+      // SDK 返回的是 u64 格式 (10^6 精度)
+      const tokenAmount = parseFloat(stopLossAnalysis.buyTokenAmount) / 1e6;
+      return formatDisplayNumber(tokenAmount.toString(), 6);
+    }
+    // 如果还没有模拟结果，返回占位符
+    return '--';
   };
 
   // Calculate total position value - 使用 SDK 返回的 leverage
@@ -99,20 +101,10 @@ const LongPanel = React.memo(({
     const effectiveLeverage = stopLossAnalysis?.leverage ? parseFloat(stopLossAnalysis.leverage) : leverage;
     return numAmount * effectiveLeverage;
   };
-  
+
   // 获取显示用的 leverage
   const getDisplayLeverage = () => {
     return stopLossAnalysis?.leverage ? parseFloat(stopLossAnalysis.leverage) : leverage;
-  };
-  
-  // 获取显示用的代币数量
-  const getDisplayTokens = () => {
-    if (stopLossAnalysis?.buyTokenAmount) {
-      // SDK 返回的是 u64 格式 (10^6 精度)
-      const tokenAmount = parseFloat(stopLossAnalysis.buyTokenAmount) / 1e6;
-      return formatDisplayNumber(tokenAmount.toString(), 6);
-    }
-    return calculateTokens(amount);
   };
   
   // 计算动态百分比: (estimatedMargin / buySolAmount) * 100
@@ -257,8 +249,9 @@ const LongPanel = React.memo(({
 
   // 调用 SDK 模拟 Long Stop Loss (使用 SOL 金额输入)
   const simulateStopLoss = useCallback(async (currentAmount, currentLeverage) => {
-    if (!isReady || !sdk || !mintAddress || !lastPrice || !downOrders1000) {
-      console.log('[LongPanel] SDK not ready or missing data for stop loss simulation');
+    // ✅ 简化版：只需检查基本条件
+    if (!isReady || !sdk || !mintAddress) {
+      console.log('[LongPanel] SDK not ready or missing mint address');
       return;
     }
 
@@ -269,9 +262,10 @@ const LongPanel = React.memo(({
       // 将 SOL 金额转换为 u64 格式 (9位精度 lamports)
       const buySolAmount = convertToSolDecimals(parseFloat(currentAmount), 9).toString();
 
-      // 计算 stopLossPrice (使用滑动条的 leverage)
-      const stopLossPrice = calculateStopLossPrice(currentLeverage, lastPrice);
-      
+      // 计算止损价格（需要先获取当前价格）
+      const currentPrice = await sdk.data.price(mintAddress);
+      const stopLossPrice = calculateStopLossPrice(currentLeverage, currentPrice);
+
       if (!stopLossPrice) {
         console.log('[LongPanel] Failed to calculate stopLossPrice');
         return;
@@ -280,22 +274,17 @@ const LongPanel = React.memo(({
       console.log('[LongPanel] Simulating stop loss with:', {
         mint: mintAddress,
         buySolAmount,
-        stopLossPrice,
-        hasLastPrice: !!lastPrice,
-        hasOrdersData: !!downOrders1000
+        stopLossPrice
       });
 
-      // 调用 SDK - 使用 simulateLongSolStopLoss      
+      // ✅ 简化版：只传3个参数，SDK 自动获取价格和订单数据
       const result = await sdk.simulator.simulateLongSolStopLoss(
         mintAddress,
         buySolAmount,
-        stopLossPrice,
-        lastPrice,
-        downOrders1000
+        stopLossPrice
       );
 
-
-      console.log('[LongPanel] simulateLongSolStopLoss result JSON:', JSON.stringify(result, (key, value) => 
+      console.log('[LongPanel] simulateLongSolStopLoss result JSON:', JSON.stringify(result, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
       , 2));
       setStopLossAnalysis(result);
@@ -306,7 +295,7 @@ const LongPanel = React.memo(({
     } finally {
       setStopLossLoading(false);
     }
-  }, [isReady, sdk, mintAddress, lastPrice, downOrders1000, calculateStopLossPrice]);
+  }, [isReady, sdk, mintAddress, calculateStopLossPrice]);
 
   // Handle long action
   const handleLong = async () => {
@@ -336,7 +325,8 @@ const LongPanel = React.memo(({
       return;
     }
 
-    if (!stopLossAnalysis || !stopLossAnalysis.executableStopLossPrice) {
+    // ✅ 验证候选索引数组
+    if (!stopLossAnalysis || !stopLossAnalysis.executableStopLossPrice || !stopLossAnalysis.close_insert_indices) {
       showToast('error', 'Stop loss data not available, please wait for calculation');
       return;
     }
@@ -361,11 +351,10 @@ const LongPanel = React.memo(({
       // 参数转换
       const maxSolAmount = calculateMaxSolAmountWithSlippage(leveragedSolAmount, actualSlippage);
       const marginSol = calculateMaxSolAmountWithSlippage(originalSolAmount, actualSlippage);
-      
-      // Stop Loss 参数
+
+      // ✅ Stop Loss 参数 - 使用候选索引数组
       const closePrice = new anchor.BN(stopLossAnalysis.executableStopLossPrice.toString());
-      const prevOrder = stopLossAnalysis.prev_order_pda ? new PublicKey(stopLossAnalysis.prev_order_pda) : null;
-      const nextOrder = stopLossAnalysis.next_order_pda ? new PublicKey(stopLossAnalysis.next_order_pda) : null;
+      const closeInsertIndices = stopLossAnalysis.close_insert_indices;
 
       console.log('[LongPanel] 做多参数:', {
         mintAddress,
@@ -377,21 +366,18 @@ const LongPanel = React.memo(({
         maxSolAmount: maxSolAmount.toString(),
         marginSol: marginSol.toString(),
         closePrice: closePrice.toString(),
-        prevOrder: prevOrder?.toString(),
-        nextOrder: nextOrder?.toString(),
+        closeInsertIndices: closeInsertIndices,  // ✅ 输出候选索引数组
         walletAddress
       });
 
-      // 调用 SDK 做多接口
-      //console.log('[LongPanel] 调用 sdk.trading.long...');
+      // ✅ 调用 SDK 做多接口 - 使用 closeInsertIndices
       const result = await sdk.trading.long({
         mintAccount: mintAddress,
         buyTokenAmount: buyTokenAmount,
         maxSolAmount: maxSolAmount,
         marginSol: marginSol,
         closePrice: closePrice,
-        prevOrder: prevOrder,
-        nextOrder: nextOrder,
+        closeInsertIndices: closeInsertIndices,  // ✅ 使用候选索引数组
         payer: new PublicKey(walletAddress)
       });
 
@@ -465,8 +451,8 @@ const LongPanel = React.memo(({
         debounceTimeoutRef.current = null;
       }
       
-      // 检查是否满足计算条件
-      if (currentAmount > 0 && leverage > 0 && isReady && mintAddress && lastPrice && downOrders1000) {
+      // ✅ 简化条件检查
+      if (currentAmount > 0 && leverage > 0 && isReady && mintAddress) {
         // 检查是否是用户主动操作 (amount 或 leverage 发生变化)
         const lastInput = lastUserInputRef.current;
         const isUserAction = lastInput.amount !== amount || lastInput.leverage !== leverage;
@@ -515,7 +501,7 @@ const LongPanel = React.memo(({
         debounceTimeoutRef.current = null;
       }
     };
-  }, [amount, leverage, isReady, mintAddress, lastPrice, downOrders1000, simulateStopLoss]);
+  }, [amount, leverage, isReady, mintAddress, simulateStopLoss]);
 
 
   const hasInsufficientBalance = parseFloat(amount) > solBalance;
@@ -631,8 +617,8 @@ const LongPanel = React.memo(({
           )}
         </div>
         <div className="text-sm text-gray-500 mt-1">
-          {stopLossAnalysis?.receiveAmount ? (
-            <div>You receive: {(parseFloat(stopLossAnalysis.receiveAmount) / 1e9).toFixed(6)} SOL</div>
+          {stopLossAnalysis?.tradeAmount ? (
+            <div>You receive: {(parseFloat(stopLossAnalysis.tradeAmount) / 1e9).toFixed(6)} SOL</div>
           ) : (
             <div>Margin will be fully liquidated at stop-loss.</div>
           )}
@@ -664,7 +650,8 @@ const LongPanel = React.memo(({
           !isReady || 
           !mintAddress ||
           isProcessing ||
-          !stopLossAnalysis?.executableStopLossPrice
+          !stopLossAnalysis?.executableStopLossPrice ||
+          !stopLossAnalysis?.close_insert_indices
         }
         className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-nunito font-bold border-2 border-black cartoon-shadow trading-button"
       >

@@ -6,3 +6,5 @@ export { default as TokenInfo } from './TokenInfo.jsx';
 export { default as TokenInfoTabs } from './TokenInfoTabs.jsx';
 export { default as PositionPanel } from './PositionPanel.jsx';
 export { default as PositionItem } from './PositionItem.jsx';
+export { default as ClosedOrdersPanel } from './ClosedOrdersPanel.tsx';
+export { default as ClosedOrderItem } from './ClosedOrderItem.tsx';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { calculateTokensFromSOL, formatDisplayNumber } from '../../utils/priceCalculator';
+import { formatDisplayNumber } from '../../utils/priceCalculator';
 import { Decimal } from 'decimal.js';
 import { usePinPetSdk } from '../../contexts/PinPetSdkContext';
 import { useWalletContext } from '../../contexts/WalletContext';
@@ -28,7 +28,7 @@ const ShortPanel = React.memo(({
   onQuickActionRefresh = () => {}, // 新增：快捷操作刷新回调
   tradingData = {}
 }: ShortPanelProps) => {
-  const { upOrders1000, lastPrice, loading } = tradingData;
+  const { loading } = tradingData; // ✅ 不再需要 upOrders1000 和 lastPrice
   const [amount, setAmount] = useState('1');
   const [leverage, setLeverage] = useState(2.0);
   const [stopLoss] = useState(30);
@@ -98,28 +98,20 @@ const ShortPanel = React.memo(({
     return numAmount * effectiveLeverage;
   };
 
-  // Calculate how many tokens to short using precise decimal calculation
-  const calculateTokensToShort = (solAmount) => {
-    if (!lastPrice) return '0';
-    const numAmount = parseFloat(solAmount) || 0;
-    const leveragedAmount = numAmount * leverage;
-    const tokensAmount = calculateTokensFromSOL(leveragedAmount.toString(), lastPrice);
-    return formatDisplayNumber(tokensAmount, 6);
-  };
-  
   // 获取显示用的 leverage
   const getDisplayLeverage = () => {
     return stopLossAnalysis?.leverage ? parseFloat(stopLossAnalysis.leverage) : leverage;
   };
-  
-  // 获取显示用的代币数量
+
+  // ✅ 获取显示用的代币数量 - 直接使用 SDK 返回值
   const getDisplayTokens = () => {
     if (stopLossAnalysis?.sellTokenAmount) {
       // SDK 返回的是 u64 格式 (10^6 精度)
       const tokenAmount = parseFloat(stopLossAnalysis.sellTokenAmount) / 1e6;
       return formatDisplayNumber(tokenAmount.toString(), 6);
     }
-    return calculateTokensToShort(amount);
+    // 如果还没有模拟结果，返回占位符
+    return '--';
   };
   
   // 计算动态百分比: (estimatedMargin / sellSolAmount) * 100
@@ -266,10 +258,11 @@ const ShortPanel = React.memo(({
     }
   }, []);
 
-  // 调用 SDK 模拟 Short Stop Loss (使用 SOL 金额输入)
+  // ✅ 调用 SDK 模拟 Short Stop Loss (使用 SOL 金额输入) - 新版本
   const simulateStopLoss = useCallback(async (currentAmount, currentLeverage) => {
-    if (!isReady || !sdk || !mintAddress || !lastPrice || !upOrders1000) {
-      console.log('[ShortPanel] SDK not ready or missing data for stop loss simulation');
+    // ✅ 简化版：只需检查基本条件
+    if (!isReady || !sdk || !mintAddress) {
+      console.log('[ShortPanel] SDK not ready or missing mint address');
       return;
     }
 
@@ -280,9 +273,10 @@ const ShortPanel = React.memo(({
       // 将 SOL 金额转换为 u64 格式 (9位精度 lamports)
       const sellSolAmount = convertToSolDecimals(parseFloat(currentAmount), 9).toString();
 
-      // 计算 stopLossPrice (使用滑动条的 leverage)
-      const stopLossPrice = calculateStopLossPrice(currentLeverage, lastPrice);
-      
+      // 计算止损价格（需要先获取当前价格）
+      const currentPrice = await sdk.data.price(mintAddress);
+      const stopLossPrice = calculateStopLossPrice(currentLeverage, currentPrice);
+
       if (!stopLossPrice) {
         console.log('[ShortPanel] Failed to calculate stopLossPrice');
         return;
@@ -291,33 +285,17 @@ const ShortPanel = React.memo(({
       console.log('[ShortPanel] Simulating stop loss with:', {
         mint: mintAddress,
         sellSolAmount,
-        stopLossPrice,
-        hasLastPrice: !!lastPrice,
-        hasOrdersData: !!upOrders1000
+        stopLossPrice
       });
 
-      // 调用 SDK - 使用 simulateSellSolStopLoss
-      const inputParams = {
+      // ✅ 简化版：只传3个参数，SDK 自动获取价格和订单数据
+      const result = await sdk.simulator.simulateShortSolStopLoss(
         mintAddress,
         sellSolAmount,
-        stopLossPrice,
-        lastPrice,
-        upOrders1000
-      };
-      console.log('[ShortPanel] simulateSellSolStopLoss1 input params JSON:', JSON.stringify(inputParams, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-      , 2));
-      
-      const result = await sdk.simulator.simulateSellSolStopLoss(
-        mintAddress,
-        sellSolAmount,
-        stopLossPrice,
-        lastPrice,
-        upOrders1000
+        stopLossPrice
       );
 
-
-      console.log('[ShortPanel] simulateSellSolStopLoss2 result JSON:', JSON.stringify(result, (key, value) => 
+      console.log('[ShortPanel] simulateShortSolStopLoss result JSON:', JSON.stringify(result, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
       , 2));
       setStopLossAnalysis(result);
@@ -328,7 +306,7 @@ const ShortPanel = React.memo(({
     } finally {
       setStopLossLoading(false);
     }
-  }, [isReady, sdk, mintAddress, lastPrice, upOrders1000, calculateStopLossPrice]);
+  }, [isReady, sdk, mintAddress, calculateStopLossPrice]);
 
   // Handle short action - 完整的做空功能
   const handleShort = async () => {
@@ -358,7 +336,8 @@ const ShortPanel = React.memo(({
       return;
     }
 
-    if (!stopLossAnalysis || !stopLossAnalysis.executableStopLossPrice) {
+    // ✅ 验证候选索引数组
+    if (!stopLossAnalysis || !stopLossAnalysis.executableStopLossPrice || !stopLossAnalysis.close_insert_indices) {
       showToast('error', 'Stop loss data not available, please wait for calculation');
       return;
     }
@@ -385,11 +364,10 @@ const ShortPanel = React.memo(({
 
       // 计算 marginSol (保证金加上滑点，9位精度)
       const marginSol = calculateMaxMarginSol(originalSolAmount, actualSlippage);
-      
-      // 止损参数
+
+      // ✅ Stop Loss 参数 - 使用候选索引数组
       const closePrice = new anchor.BN(stopLossAnalysis.executableStopLossPrice.toString());
-      const prevOrder = stopLossAnalysis.prev_order_pda ? new PublicKey(stopLossAnalysis.prev_order_pda) : null;
-      const nextOrder = stopLossAnalysis.next_order_pda ? new PublicKey(stopLossAnalysis.next_order_pda) : null;
+      const closeInsertIndices = stopLossAnalysis.close_insert_indices;
 
       console.log('[ShortPanel] 做空参数:', {
         mintAddress,
@@ -401,12 +379,11 @@ const ShortPanel = React.memo(({
         minSolOutput: minSolOutput.toString(),
         marginSol: marginSol.toString(),
         closePrice: closePrice.toString(),
-        prevOrder: prevOrder?.toString(),
-        nextOrder: nextOrder?.toString(),
+        closeInsertIndices: closeInsertIndices,  // ✅ 输出候选索引数组
         walletAddress
       });
 
-      // 调用 SDK 做空接口
+      // ✅ 调用 SDK 做空接口 - 使用 closeInsertIndices
       console.log('[ShortPanel] 调用 sdk.trading.short...');
       const result = await sdk.trading.short({
         mintAccount: mintAddress,
@@ -414,8 +391,7 @@ const ShortPanel = React.memo(({
         minSolOutput: minSolOutput,
         marginSol: marginSol,
         closePrice: closePrice,
-        prevOrder: prevOrder,
-        nextOrder: nextOrder,
+        closeInsertIndices: closeInsertIndices,  // ✅ 使用候选索引数组
         payer: new PublicKey(walletAddress)
       });
 
@@ -489,8 +465,8 @@ const ShortPanel = React.memo(({
         debounceTimeoutRef.current = null;
       }
       
-      // 检查是否满足计算条件
-      if (currentAmount > 0 && leverage > 0 && isReady && mintAddress && lastPrice && upOrders1000) {
+      // ✅ 简化条件检查
+      if (currentAmount > 0 && leverage > 0 && isReady && mintAddress) {
         // 检查是否是用户主动操作 (amount 或 leverage 发生变化)
         const lastInput = lastUserInputRef.current;
         const isUserAction = lastInput.amount !== amount || lastInput.leverage !== leverage;
@@ -539,7 +515,7 @@ const ShortPanel = React.memo(({
         debounceTimeoutRef.current = null;
       }
     };
-  }, [amount, leverage, isReady, mintAddress, lastPrice, upOrders1000, simulateStopLoss]);
+  }, [amount, leverage, isReady, mintAddress, simulateStopLoss]); // ✅ 移除 lastPrice 和 upOrders1000
 
   const hasInsufficientBalance = parseFloat(amount) > solBalance;
 
@@ -684,10 +660,11 @@ const ShortPanel = React.memo(({
           parseFloat(amount) <= 0 || 
           loading || 
           !connected || 
-          !isReady || 
+          !isReady ||
           !mintAddress ||
           isProcessing ||
-          !stopLossAnalysis?.executableStopLossPrice
+          !stopLossAnalysis?.executableStopLossPrice ||
+          !stopLossAnalysis?.close_insert_indices
         }
         className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-nunito font-bold border-2 border-black cartoon-shadow trading-button"
       >

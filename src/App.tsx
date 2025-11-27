@@ -11,7 +11,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 
 // 导入页面组件
 import { Header, Footer } from './components/common';
-import { HomePage, CreatePage, TradeCenterPage, DebugPage } from './components/pages';
+import { HomePage, CreatePage, TradeCenterPage, DebugPage, ResourcesPage } from './components/pages';
 
 /**
  * @component App
@@ -47,14 +47,7 @@ function App(){
                         </div>
                       }
                     />
-                    <Route
-                      path="/resources"
-                      element={
-                        <div className="p-8 text-center">
-                          <h1 className="text-4xl font-nunito">Resources Page Coming Soon! 📚</h1>
-                        </div>
-                      }
-                    />
+                    <Route path="/resources" element={<ResourcesPage />} />
                     <Route path="/debug" element={<DebugPage />} />
                   </Routes>
 

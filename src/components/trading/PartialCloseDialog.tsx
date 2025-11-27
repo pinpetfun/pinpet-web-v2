@@ -10,6 +10,11 @@ import { TradingToast } from '../common';
 import { getEmojiImage } from '../../config/emojiConfig';
 
 const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, onRefresh }) => {
+  // 🔍 调试：打印完整的 position 对象
+  console.log('[PartialCloseDialog] 🔍 完整 position 对象:', position);
+  console.log('[PartialCloseDialog] 🔍 position.order_id:', position?.order_id);
+  console.log('[PartialCloseDialog] 🔍 position 所有键:', Object.keys(position || {}));
+
   // SDK 和钱包 hooks
   const { sdk, isReady } = usePinPetSdk();
   const { walletAddress, connected } = useWalletContext();
@@ -18,13 +23,13 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
   // 输入状态
   const [buyAmount, setBuyAmount] = useState('');
   const [error, setError] = useState('');
-  
+
   // 计算状态
   const [estimatedReceive, setEstimatedReceive] = useState('0.000000000');
-  
+
   // 交易状态
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // 提示框状态
   const [toast, setToast] = useState({
     isVisible: false,
@@ -47,7 +52,9 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
     _profitDisplay,
     lock_lp_token_amount,
     lock_lp_sol_amount,
-    mint
+    mint,
+    order_id,  // 新增：订单ID
+    user       // 新增：订单创建者地址
   } = position || {};
 
   // 显示提示框
@@ -208,8 +215,8 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       return;
     }
 
-    if (!order_pda_full) {
-      showToast('error', 'Order address not found');
+    if (order_id === undefined || order_id === null) {
+      showToast('error', 'Order ID not found');
       return;
     }
 
@@ -224,7 +231,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         orderType: order_type,
         direction,
         mint,
-        orderPda: order_pda_full,
+        orderId: order_id,
         partialAmount: amount,
         lockLpTokenAmount: lock_lp_token_amount,
         lockLpSolAmount: lock_lp_sol_amount
@@ -238,24 +245,53 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       });
 
       let result;
-      
+      let closeOrderIndices;
+
       if (order_type === 1) { // Long partial close
         console.log('[PartialCloseDialog] Executing Long partial close...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateLongClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PartialCloseDialog] 做多平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PartialCloseDialog] 生成做多平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeLong({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           sellTokenAmount: new anchor.BN(rawTokenAmount.toString()),
           minSolOutput: new anchor.BN("0"),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       } else { // Short partial close
         console.log('[PartialCloseDialog] Executing Short partial close...');
+
+        // 使用模拟器获取平仓候选索引
+        try {
+          const closeIndicesResult = await sdk.simulator.simulateShortClose(mint, order_id);
+          closeOrderIndices = closeIndicesResult.closeOrderIndices;
+          console.log('[PartialCloseDialog] 做空平仓候选索引:', closeOrderIndices);
+        } catch (error) {
+          console.error('[PartialCloseDialog] 生成做空平仓索引失败:', error);
+          showToast('error', 'Failed to generate close indices');
+          return;
+        }
+
         result = await sdk.trading.closeShort({
           mintAccount: mint,
-          closeOrder: order_pda_full,
           buyTokenAmount: new anchor.BN(rawTokenAmount.toString()),
           maxSolAmount: new anchor.BN(lock_lp_sol_amount.toString()),
-          payer: new PublicKey(walletAddress)
+          closeOrderId: order_id,
+          closeOrderIndices: closeOrderIndices,
+          payer: new PublicKey(walletAddress),
+          userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       }
 
@@ -305,10 +341,8 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         }, 2000); // 2 seconds delay to refresh data
       }
 
-      // Auto close dialog after success toast is shown
-      setTimeout(() => {
-        handleClose();
-      }, 3000); // Close after 3 seconds to let user see the success message
+      // Note: Dialog will stay open so user can see the success message and close manually
+      // They can click X button, click outside, or press ESC to close
 
     } catch (error) {
       console.error('[PartialCloseDialog] Partial close failed:', error);
@@ -380,22 +414,24 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
   if (!isOpen || !position) return null;
 
   const modalContent = (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ 
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9999
-      }}
-      onClick={handleOverlayClick}
-    >
-      <div className="bg-white rounded-lg shadow-cartoon w-full max-w-md p-6 space-y-4 relative">
+    <>
+      {/* Dialog Overlay and Content */}
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50"
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999
+        }}
+        onClick={handleOverlayClick}
+      >
+        <div className="bg-white rounded-lg shadow-cartoon w-full max-w-md p-6 space-y-4 relative">
         {/* 关闭按钮 */}
         <button 
           onClick={handleClose}
@@ -499,9 +535,10 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         >
           {isProcessing ? 'Closing...' : 'Close'}
         </button>
+        </div>
       </div>
-      
-      {/* 交易结果提示框 */}
+
+      {/* 交易结果提示框 - 独立的 Portal，不受 Dialog 关闭影响 */}
       <TradingToast
         isVisible={toast.isVisible}
         type={toast.type}
@@ -509,7 +546,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         txHash={toast.txHash}
         onClose={closeToast}
       />
-    </div>
+    </>
   );
 
   return createPortal(modalContent, document.body);
