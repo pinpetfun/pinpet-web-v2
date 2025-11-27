@@ -270,7 +270,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
       </div>
 
       {/* 订单列表区域 */}
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-2">
         {isLoading && closedOrders.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <div className="text-2xl mb-2">⏳</div>
