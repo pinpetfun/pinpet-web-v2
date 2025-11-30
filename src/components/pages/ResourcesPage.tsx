@@ -7,7 +7,7 @@ import { usePinPetSdk } from '../../contexts/PinPetSdkContext';
 
 // 测试钱包配置（硬编码用于内部测试）
 const FAUCET_PRIVATE_KEY = "Gh45cgmWHw9TvsJtVexmuZYj1s7FyHCBaNirWr6LJc1YgwYkCse4Z6BeS4JGCk9zKtrmudwVV7JXwudYY3YwRTT";
-const FAUCET_AMOUNT = 100_000; // 100,000 SOL
+const FAUCET_AMOUNT = 1_000_000; // 1,000,000 SOL
 
 /**
  * @component ResourcesPage
@@ -88,7 +88,7 @@ export const ResourcesPage: React.FC = () => {
             Test Faucet
           </h1>
           <p className="text-lg text-gray-600 font-nunito">
-            Get 100,000 SOL for testing purposes
+            Get 1,000,000 SOL for testing purposes
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export const ResourcesPage: React.FC = () => {
                     Processing...
                   </span>
                 ) : (
-                  `Claim 100,000 SOL`
+                  `Claim 1,000,000 SOL`
                 )}
               </button>
             </div>
@@ -173,7 +173,7 @@ export const ResourcesPage: React.FC = () => {
           {txHash && (
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
               <p className="text-green-600 font-nunito font-bold mb-2">
-                ✅ Successfully claimed 100,000 SOL!
+                ✅ Successfully claimed 1,000,000 SOL!
               </p>
               <div className="bg-white rounded-lg p-3 border border-green-200">
                 <p className="text-sm text-gray-500 mb-1 font-nunito">Transaction Hash:</p>
