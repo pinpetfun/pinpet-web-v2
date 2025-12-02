@@ -51,36 +51,54 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
         // 1. realized_sol_amount: 半平仓已兑现的利润
         const realizedSol = order.realized_sol_amount;
 
-        // 2. 计算最后平仓时能赚多少 SOL
-        // sellFromPriceWithTokenInput 返回 [交易完成后的价格, 得到的SOL数量]
-        const sellResult = CurveAMM.sellFromPriceWithTokenInput(
-          close_info.close_price,
-          order.lock_lp_token_amount
-        );
+        // 检查是否为强制清算 (close_reason = 2)
+        if (close_info.close_reason === 2) {
+          // 强平：总获利 = realized_sol_amount - margin_init_sol_amount
+          // 因为被强平了，保证金全部损失，只剩下之前半平仓的利润
+          totalProfitSolLamports = realizedSol - order.margin_init_sol_amount;
 
-        if (sellResult === null) {
-          console.error('[ClosedOrdersPanel] sellFromPriceWithTokenInput 返回 null:', {
-            close_price: close_info.close_price,
-            lock_lp_token_amount: order.lock_lp_token_amount
-          });
-          totalProfitSolLamports = 0;
-        } else {
-          const [, finalSellSol] = sellResult; // 取第二个元素：得到的SOL数量
-
-          // 3. 总获利 = realized_sol_amount + (最后赚取的sol - lock_lp_sol_amount) - margin_init_sol_amount
-          totalProfitSolLamports = realizedSol + (Number(finalSellSol) - order.lock_lp_sol_amount) - order.margin_init_sol_amount;
-
-          console.log('[ClosedOrdersPanel] 做多订单盈利计算:', {
+          console.log('[ClosedOrdersPanel] 做多订单强制清算盈利计算:', {
             mint,
             order_id: order.order_id,
+            close_reason: close_info.close_reason,
             realized_sol_amount: realizedSol,
-            close_price: close_info.close_price,
-            lock_lp_token_amount: order.lock_lp_token_amount,
-            final_sell_sol: Number(finalSellSol),
-            lock_lp_sol_amount: order.lock_lp_sol_amount,
             margin_init_sol_amount: order.margin_init_sol_amount,
             total_profit_lamports: totalProfitSolLamports
           });
+        } else {
+          // 正常平仓（手动或止盈止损）
+          // 2. 计算最后平仓时能赚多少 SOL
+          // sellFromPriceWithTokenInput 返回 [交易完成后的价格, 得到的SOL数量]
+          const sellResult = CurveAMM.sellFromPriceWithTokenInput(
+            close_info.close_price,
+            order.lock_lp_token_amount
+          );
+
+          if (sellResult === null) {
+            console.error('[ClosedOrdersPanel] sellFromPriceWithTokenInput 返回 null:', {
+              close_price: close_info.close_price,
+              lock_lp_token_amount: order.lock_lp_token_amount
+            });
+            totalProfitSolLamports = 0;
+          } else {
+            const [, finalSellSol] = sellResult; // 取第二个元素：得到的SOL数量
+
+            // 3. 总获利 = realized_sol_amount + (最后赚取的sol - lock_lp_sol_amount) - margin_init_sol_amount
+            totalProfitSolLamports = realizedSol + (Number(finalSellSol) - order.lock_lp_sol_amount) - order.margin_init_sol_amount;
+
+            console.log('[ClosedOrdersPanel] 做多订单正常平仓盈利计算:', {
+              mint,
+              order_id: order.order_id,
+              close_reason: close_info.close_reason,
+              realized_sol_amount: realizedSol,
+              close_price: close_info.close_price,
+              lock_lp_token_amount: order.lock_lp_token_amount,
+              final_sell_sol: Number(finalSellSol),
+              lock_lp_sol_amount: order.lock_lp_sol_amount,
+              margin_init_sol_amount: order.margin_init_sol_amount,
+              total_profit_lamports: totalProfitSolLamports
+            });
+          }
         }
       } else {
         // 做空订单暂时保持原有逻辑
