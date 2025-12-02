@@ -29,6 +29,14 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // 坐标类型状态：从localStorage读取，默认为'logarithmic'（对数）
+  const [scaleType, setScaleType] = useState(() => {
+    const saved = localStorage.getItem('trading-chart-scale-type');
+    return saved || 'logarithmic';
+  });
+  const [isScaleDropdownOpen, setIsScaleDropdownOpen] = useState(false);
+  const scaleDropdownRef = useRef(null);
   
   // Chart相关refs
   const chartContainerRef = useRef(null);
@@ -42,6 +50,11 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
     { value: '1s', label: '1s' },
     { value: '30s', label: '30s' },
     { value: '5m', label: '5m' }
+  ];
+
+  const scaleTypeOptions = [
+    { value: 'linear', label: 'Linear' },
+    { value: 'logarithmic', label: 'Log' }
   ];
 
   // 时间周期转换函数
@@ -134,6 +147,9 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      if (scaleDropdownRef.current && !scaleDropdownRef.current.contains(event.target)) {
+        setIsScaleDropdownOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -147,23 +163,23 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
     setIsDropdownOpen(false);
     // 保存到localStorage
     localStorage.setItem('trading-chart-timeframe', timeframe);
-    
+
     // 切换时间周期时重新订阅
     if (mintAddress) {
       const oldServerTimeframe = getServerTimeframe(selectedTimeframe);
       const newServerTimeframe = getServerTimeframe(timeframe);
-      
+
       console.log('🔄 切换时间周期:', { from: oldServerTimeframe, to: newServerTimeframe });
-      
+
       // 取消之前的订阅
       unsubscribe(mintAddress, oldServerTimeframe);
-      
+
       // 清除当前数据和图表
       clearData();
       if (candlestickSeriesRef.current) {
         candlestickSeriesRef.current.setData([]);
       }
-      
+
       // 重新订阅新的时间周期
       setTimeout(() => {
         console.log('📤 重新订阅:', { symbol: mintAddress, interval: newServerTimeframe });
@@ -173,12 +189,28 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
           subscription_id: `chart_switch_${Date.now()}`
         });
       }, 500);
-      
+
       // 获取新的历史数据
       setTimeout(() => {
         console.log('📤 重新请求历史数据:', { symbol: mintAddress, interval: newServerTimeframe });
         getHistoryData(mintAddress, newServerTimeframe, 50);
       }, 1500);
+    }
+  };
+
+  const handleScaleTypeSelect = (type) => {
+    setScaleType(type);
+    setIsScaleDropdownOpen(false);
+    // 保存到localStorage
+    localStorage.setItem('trading-chart-scale-type', type);
+
+    // 更新图表的价格坐标类型
+    if (chartRef.current) {
+      const mode = type === 'logarithmic' ? 1 : 0; // 0 = Normal (Linear), 1 = Logarithmic
+      chartRef.current.priceScale('right').applyOptions({
+        mode: mode,
+      });
+      console.log('📊 切换坐标类型:', { type, mode });
     }
   };
 
@@ -200,6 +232,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
       crosshair: { mode: 0 },
       rightPriceScale: {
         borderColor: 'rgba(255, 255, 255, 0.3)',
+        mode: scaleType === 'logarithmic' ? 1 : 0, // 设置初始坐标类型
       },
       timeScale: {
         borderColor: 'rgba(255, 255, 255, 0.3)',
@@ -303,14 +336,14 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
         <div className="flex items-center space-x-4 text-base font-nunito">
           {/* 时间间隔选择器 */}
           <div className="relative" ref={dropdownRef}>
-            <button 
+            <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center px-3 py-1 bg-orange-300 hover:bg-orange-400 border-2 border-black rounded-lg transition-all duration-200 font-nunito font-bold text-black cartoon-shadow hover:shadow-cartoon-sm active:translate-y-0.5"
             >
               {selectedTimeframe}
               <ChevronDownIcon className={`h-4 w-4 ml-1 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-            
+
             {/* 下拉菜单 */}
             {isDropdownOpen && (
               <div className="absolute top-full left-0 mt-2 bg-white border-3 border-black rounded-lg cartoon-shadow z-50 min-w-[80px] overflow-hidden">
@@ -319,9 +352,39 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
                     key={option.value}
                     onClick={() => handleTimeframeSelect(option.value)}
                     className={`w-full px-4 py-2 text-left font-nunito font-bold transition-colors duration-150 hover:bg-orange-200 ${
-                      selectedTimeframe === option.value 
-                        ? 'bg-orange-100 text-orange-800' 
+                      selectedTimeframe === option.value
+                        ? 'bg-orange-100 text-orange-800'
                         : 'text-black hover:text-orange-800'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 坐标类型选择器 */}
+          <div className="relative" ref={scaleDropdownRef}>
+            <button
+              onClick={() => setIsScaleDropdownOpen(!isScaleDropdownOpen)}
+              className="flex items-center px-3 py-1 bg-cyan-300 hover:bg-cyan-400 border-2 border-black rounded-lg transition-all duration-200 font-nunito font-bold text-black cartoon-shadow hover:shadow-cartoon-sm active:translate-y-0.5"
+            >
+              {scaleTypeOptions.find(opt => opt.value === scaleType)?.label}
+              <ChevronDownIcon className={`h-4 w-4 ml-1 transition-transform duration-200 ${isScaleDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* 下拉菜单 */}
+            {isScaleDropdownOpen && (
+              <div className="absolute top-full left-0 mt-2 bg-white border-3 border-black rounded-lg cartoon-shadow z-50 min-w-[100px] overflow-hidden">
+                {scaleTypeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleScaleTypeSelect(option.value)}
+                    className={`w-full px-4 py-2 text-left font-nunito font-bold transition-colors duration-150 hover:bg-cyan-200 ${
+                      scaleType === option.value
+                        ? 'bg-cyan-100 text-cyan-800'
+                        : 'text-black hover:text-cyan-800'
                     }`}
                   >
                     {option.label}
