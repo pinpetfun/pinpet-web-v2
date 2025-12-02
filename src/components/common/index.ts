@@ -7,3 +7,4 @@ export { default as TradingToast } from './TradingToast.jsx';
 export { default as WebSocketDebug } from './WebSocketDebug.jsx';
 export { default as ConfigDebug } from './ConfigDebug.jsx';
 export { default as PdaInfoDialog } from './PdaInfoDialog.jsx';
+export { default as BuyAmountDialog } from './BuyAmountDialog.tsx';
