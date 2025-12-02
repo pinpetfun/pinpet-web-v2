@@ -108,7 +108,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
         // 检查是否为强制清算 (close_reason = 2)
         if (close_info.close_reason === 2) {
           // 强平：保证金刚好扣完，总获利 = realized_sol_amount
-          totalProfitSolLamports = realizedSol;
+          totalProfitSolLamports = realizedSol - order.margin_sol_amount;
 
           console.log('[ClosedOrdersPanel] 做空订单强制清算盈利计算:', {
             mint,
