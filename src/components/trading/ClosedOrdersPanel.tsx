@@ -4,6 +4,7 @@ import ClosedOrderItem from './ClosedOrderItem';
 import { useWalletContext } from '../../contexts/WalletContext';
 import { config, convertIpfsUrl } from '../../config';
 import { getEmojiImage } from '../../config/emojiConfig';
+import PinPetSDK from 'pinpet-sdk';
 
 const ClosedOrdersPanel = ({ mintAddress = null }) => {
   // 从 localStorage 读取过滤模式，默认为 "all"
@@ -27,6 +28,8 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
   // 转换API数据到UI格式 (需要传入 tokenMap)
   const transformApiData = useCallback((apiRecords, tokenMap = {}) => {
+    const { CurveAMM } = PinPetSDK;
+
     return apiRecords.map((record) => {
       const { order, close_info, mint } = record;
 
@@ -40,14 +43,58 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
         3: 'take_profit'
       };
 
-      // 计算盈亏百分比 = (final_pnl_sol / margin_init_sol_amount) * 100
+      // 计算盈亏
+      let totalProfitSolLamports = 0;
+
+      if (order.order_type === 1) {
+        // 做多订单的盈利计算
+        // 1. realized_sol_amount: 半平仓已兑现的利润
+        const realizedSol = order.realized_sol_amount;
+
+        // 2. 计算最后平仓时能赚多少 SOL
+        // sellFromPriceWithTokenInput 返回 [交易完成后的价格, 得到的SOL数量]
+        const sellResult = CurveAMM.sellFromPriceWithTokenInput(
+          close_info.close_price,
+          order.lock_lp_token_amount
+        );
+
+        if (sellResult === null) {
+          console.error('[ClosedOrdersPanel] sellFromPriceWithTokenInput 返回 null:', {
+            close_price: close_info.close_price,
+            lock_lp_token_amount: order.lock_lp_token_amount
+          });
+          totalProfitSolLamports = 0;
+        } else {
+          const [, finalSellSol] = sellResult; // 取第二个元素：得到的SOL数量
+
+          // 3. 总获利 = realized_sol_amount + (最后赚取的sol - lock_lp_sol_amount) - margin_init_sol_amount
+          totalProfitSolLamports = realizedSol + (Number(finalSellSol) - order.lock_lp_sol_amount) - order.margin_init_sol_amount;
+
+          console.log('[ClosedOrdersPanel] 做多订单盈利计算:', {
+            mint,
+            order_id: order.order_id,
+            realized_sol_amount: realizedSol,
+            close_price: close_info.close_price,
+            lock_lp_token_amount: order.lock_lp_token_amount,
+            final_sell_sol: Number(finalSellSol),
+            lock_lp_sol_amount: order.lock_lp_sol_amount,
+            margin_init_sol_amount: order.margin_init_sol_amount,
+            total_profit_lamports: totalProfitSolLamports
+          });
+        }
+      } else {
+        // 做空订单暂时保持原有逻辑
+        totalProfitSolLamports = close_info.final_pnl_sol;
+      }
+
+      // 计算盈亏百分比 = (总获利sol数 / margin_init_sol_amount) * 100
       const profitPercentage = order.margin_init_sol_amount > 0
-        ? (close_info.final_pnl_sol / order.margin_init_sol_amount) * 100
+        ? (totalProfitSolLamports / order.margin_init_sol_amount) * 100
         : 0;
 
       // 将 lamports 转换为 SOL
       const marginSol = (order.margin_init_sol_amount / 1_000_000_000).toFixed(4);
-      const profitSol = (close_info.final_pnl_sol / 1_000_000_000).toFixed(4);
+      const profitSol = (totalProfitSolLamports / 1_000_000_000).toFixed(4);
 
       // 格式化关闭时间
       const closeTime = new Date(close_info.close_timestamp * 1000).toLocaleString('en-US', {
