@@ -100,9 +100,68 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
             });
           }
         }
+      } else if (order.order_type === 2) {
+        // 做空订单的盈利计算
+        // 1. realized_sol_amount: 半平仓已兑现的利润
+        const realizedSol = order.realized_sol_amount;
+
+        // 检查是否为强制清算 (close_reason = 2)
+        if (close_info.close_reason === 2) {
+          // 强平：保证金刚好扣完，总获利 = realized_sol_amount
+          totalProfitSolLamports = realizedSol;
+
+          console.log('[ClosedOrdersPanel] 做空订单强制清算盈利计算:', {
+            mint,
+            order_id: order.order_id,
+            close_reason: close_info.close_reason,
+            realized_sol_amount: realizedSol,
+            total_profit_lamports: totalProfitSolLamports
+          });
+        } else {
+          // 正常平仓（手动或止盈止损）
+          // 2. borrow_amount: 需要归还的Token数量
+          // 3. 计算平仓需要花费的 SOL
+          // buyFromPriceWithTokenOutput 返回 [交易完成后的价格, 需要支付的SOL数量]
+          const buyResult = CurveAMM.buyFromPriceWithTokenOutput(
+            close_info.close_price,
+            order.borrow_amount
+          );
+
+          if (buyResult === null) {
+            console.error('[ClosedOrdersPanel] buyFromPriceWithTokenOutput 返回 null:', {
+              close_price: close_info.close_price,
+              borrow_amount: order.borrow_amount
+            });
+            totalProfitSolLamports = realizedSol;
+          } else {
+            const [, closeCostSol] = buyResult; // 取第二个元素：平仓需要支付的SOL数量
+
+            // 4. 最后平仓收益 = margin_sol_amount - 平仓成本 + lock_lp_sol_amount (锁定的LP SOL返还)
+            const finalProfit =  order.lock_lp_sol_amount - Number(closeCostSol) - order.margin_sol_amount  ;
+
+            // 5. 总获利 = realized_sol_amount + 最后平仓收益
+            totalProfitSolLamports = realizedSol + finalProfit;
+
+            console.log('[ClosedOrdersPanel] 做空订单正常平仓盈利计算:', {
+              mint,
+              order_id: order.order_id,
+              close_reason: close_info.close_reason,
+              realized_sol_amount: realizedSol,
+              close_price: close_info.close_price,
+              borrow_amount: order.borrow_amount,
+              close_cost_sol: Number(closeCostSol),
+              margin_sol_amount: order.margin_sol_amount,
+              lock_lp_sol_amount: order.lock_lp_sol_amount,
+              final_profit: finalProfit,
+              total_profit_lamports: totalProfitSolLamports,
+              计算公式: `realized_sol(${realizedSol}) + margin_sol(${order.margin_sol_amount}) - close_cost(${Number(closeCostSol)}) + lock_lp_sol(${order.lock_lp_sol_amount})`
+            });
+          }
+        }
       } else {
-        // 做空订单暂时保持原有逻辑
-        totalProfitSolLamports = close_info.final_pnl_sol;
+        // 未知订单类型
+        console.warn('[ClosedOrdersPanel] 未知订单类型:', order.order_type);
+        totalProfitSolLamports = 0;
       }
 
       // 计算盈亏百分比 = (总获利sol数 / margin_init_sol_amount) * 100
