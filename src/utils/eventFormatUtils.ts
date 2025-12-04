@@ -185,12 +185,12 @@ export const getEventTypeName = (eventType) => {
     'TokenCreated': 'Create',
     'BuySell': (data) => data.is_buy ? 'Buy' : 'Sell',
     'LongShort': (data) => data.order_type === 1 ? 'Long' : 'Short',
-    'ForceLiquidate': 'Liquidate',
+    'Liquidate': 'Liquidate',
     'FullClose': (data) => data.is_close_long ? 'Close Long' : 'Close Short',
     'PartialClose': (data) => data.is_close_long ? 'Close Long' : 'Close Short',
     'MilestoneDiscount': 'Fee Update'
   };
-  
+
   return typeNames[eventType] || eventType;
 };
 
@@ -206,8 +206,8 @@ export const getEventAddress = (eventType, eventData) => {
     case 'BuySell':
     case 'MilestoneDiscount':
       return eventData.payer;
-    case 'ForceLiquidate':
-      return eventData.order_pda;
+    case 'Liquidate':
+      return eventData.user_sol_account;
     case 'LongShort':
       return eventData.user;
     case 'FullClose':
