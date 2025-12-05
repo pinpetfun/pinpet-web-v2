@@ -48,7 +48,7 @@
       "@/utils/*": ["src/utils/*"],
       "@/services/*": ["src/services/*"],
       "@/contexts/*": ["src/contexts/*"],
-      "@/modules/*": ["src/modules/*"],
+      "@/modules/*": ["src/modules_delete/*"],
       "@/pages/*": ["src/pages/*"],
       "@/config/*": ["src/config/*"],
       "@/types/*": ["src/types/*"]

@@ -9,8 +9,8 @@ import spinpetIdl from './idl/spinpet.json';
 import { PublicKey } from '@solana/web3.js';
 
 // 导入模块（可选，用户也可以直接通过 sdk.trading 访问）
-import { TradingModule } from './modules/trading';
-import { TokenModule } from './modules/token';
+import { TradingModule } from './modules_delete/trading';
+import { TokenModule } from './modules_delete/token';
 
 // 导入配置工具
 import { getDefaultOptions } from './utils/constants';

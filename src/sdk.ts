@@ -2,12 +2,12 @@
 
 import * as anchor from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
-import { TradingModule } from './modules/trading';
-import { TokenModule } from './modules/token';
-import { ParamModule } from './modules/param';
-import { FastModule } from './modules/fast';
-import { SimulatorModule } from './modules/simulator';
-import { ChainModule } from './modules/chain';
+import { TradingModule } from './modules_delete/trading';
+import { TokenModule } from './modules_delete/token';
+import { ParamModule } from './modules_delete/param';
+import { FastModule } from './modules_delete/fast';
+import { SimulatorModule } from './modules_delete/simulator';
+import { ChainModule } from './modules_delete/chain';
 import { OrderUtils } from './utils/orderUtils';
 import spinpetIdl from './idl/spinpet.json';
 
