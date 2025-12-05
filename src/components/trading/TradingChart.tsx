@@ -306,6 +306,11 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
     if (candlestickSeriesRef.current && klineData.length > 0) {
       candlestickSeriesRef.current.setData(klineData);
       console.log('✅ 图表已更新数据, 数据点数量:', klineData.length);
+
+      // 自动适配内容范围，让K线数据填满图表区域
+      if (chartRef.current) {
+        chartRef.current.timeScale().fitContent();
+      }
     }
   }, [klineData]);
 
