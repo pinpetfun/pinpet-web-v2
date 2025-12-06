@@ -284,20 +284,33 @@ const PositionPanel = ({ mintAddress = null }) => {
     }
   };
 
-  // 根据过滤模式决定显示的持仓
+  // 根据过滤模式决定显示的持仓 (支持组合排序)
   const getFilteredPositions = () => {
+    let filtered = [];
+
+    // 1. 先按过滤模式筛选
     if (filterMode === 'current' && mintAddress) {
-      return positions.filter(position => position.mint === mintAddress);
+      filtered = positions.filter(position => position.mint === mintAddress);
+    } else {
+      filtered = [...positions];
     }
-    
-    // Show All 模式：如果有当前 mint，将其排在最前面
-    if (filterMode === 'all' && mintAddress) {
-      const currentMintPositions = positions.filter(position => position.mint === mintAddress);
-      const otherPositions = positions.filter(position => position.mint !== mintAddress);
-      return [...currentMintPositions, ...otherPositions];
-    }
-    
-    return positions; // Show All (无当前 mint)
+
+    // 2. 排序逻辑
+    filtered.sort((a, b) => {
+      // 2.1 如果在 Show All 模式下有当前 mint，优先展示当前 mint
+      if (filterMode === 'all' && mintAddress) {
+        const aIsCurrent = a.mint === mintAddress;
+        const bIsCurrent = b.mint === mintAddress;
+
+        if (aIsCurrent && !bIsCurrent) return -1; // a 是当前代币，排前面
+        if (!aIsCurrent && bIsCurrent) return 1;  // b 是当前代币，排前面
+      }
+
+      // 2.2 相同优先级内，按 order_id 降序 (越大越新，排前面)
+      return (b.order_id || 0) - (a.order_id || 0);
+    });
+
+    return filtered;
   };
 
   const displayedPositions = getFilteredPositions();
