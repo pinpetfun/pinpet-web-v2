@@ -46,7 +46,11 @@ const SellPanel = React.memo(({
   
   // 卖出状态
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
+  // Cooldown 验证状态
+  const [needsApproval, setNeedsApproval] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+
   // 提示框状态
   const [toast, setToast] = useState({
     isVisible: false,
@@ -90,6 +94,76 @@ const SellPanel = React.memo(({
   const closeToast = () => {
     setToast(prev => ({ ...prev, isVisible: false }));
   };
+
+  // 循环检查 validateCooldown (最多10次，每次间隔3秒)
+  const checkCooldownWithRetry = useCallback(async (maxRetries = 10, interval = 3000) => {
+    if (!isReady || !sdk || !mintAddress || !walletAddress || tokenBalance <= 0) {
+      console.log('[SellPanel] Skip cooldown check - conditions not met');
+      setNeedsApproval(false);
+      return;
+    }
+
+    console.log('[SellPanel] Starting cooldown validation with retry...');
+    let retries = 0;
+
+    const checkOnce = async () => {
+      try {
+        retries++;
+        console.log(`[SellPanel] Cooldown validation attempt ${retries}/${maxRetries}`);
+
+        // 调用 validateCooldown，传入 tokenBalance 优化
+        const tokenBalanceBN = convertToTokenDecimals(tokenBalance, 6);
+        const result = await sdk.tools.validateCooldown({
+          mint: mintAddress,
+          wallet: new PublicKey(walletAddress),  // validateCooldown 支持直接传入 PublicKey
+          tokenBalance: tokenBalanceBN
+        });
+
+        console.log('[SellPanel] Cooldown validation result:', {
+          isValid: result.isValid,
+          exists: result.exists,
+          reason: result.reason,
+          message: result.message
+        });
+
+        if (result.isValid) {
+          // 验证通过，显示 Sell 按钮
+          console.log('[SellPanel] ✅ Cooldown validation passed');
+          setNeedsApproval(false);
+          return true; // 验证通过，停止重试
+        } else {
+          // 验证不通过，显示 Approve 按钮
+          console.log('[SellPanel] ❌ Cooldown validation failed:', result.reason);
+          setNeedsApproval(true);
+
+          // 如果还有重试次数，继续重试
+          if (retries < maxRetries) {
+            console.log(`[SellPanel] Will retry in ${interval}ms...`);
+            await new Promise(resolve => setTimeout(resolve, interval));
+            return await checkOnce();
+          } else {
+            console.log('[SellPanel] Max retries reached, needs approval');
+            return false;
+          }
+        }
+      } catch (error) {
+        console.error(`[SellPanel] Cooldown validation error (attempt ${retries}):`, error);
+
+        // 如果还有重试次数，继续重试
+        if (retries < maxRetries) {
+          console.log(`[SellPanel] Will retry in ${interval}ms...`);
+          await new Promise(resolve => setTimeout(resolve, interval));
+          return await checkOnce();
+        } else {
+          console.log('[SellPanel] Max retries reached after errors');
+          setNeedsApproval(false); // 出错时默认显示 Sell 按钮
+          return false;
+        }
+      }
+    };
+
+    await checkOnce();
+  }, [isReady, sdk, mintAddress, walletAddress, tokenBalance, convertToTokenDecimals]);
 
   // 二分法优化 sellTokenAmount
   const optimizeSellTokenAmount = useCallback(async (currentAmount, _initialSellTokenAmount) => {
@@ -277,6 +351,92 @@ const SellPanel = React.memo(({
     }
   };
 
+  // Handle approve action
+  const handleApprove = async () => {
+    // 验证前置条件
+    if (!connected) {
+      showToast('error', 'Please connect your wallet first');
+      return;
+    }
+
+    if (!isReady || !sdk) {
+      showToast('error', 'SDK not ready, please try again later');
+      return;
+    }
+
+    if (!mintAddress) {
+      showToast('error', 'Token address not found');
+      return;
+    }
+
+    if (!walletAddress) {
+      showToast('error', 'Unable to get wallet address');
+      return;
+    }
+
+    try {
+      setIsApproving(true);
+      console.log('[SellPanel] Starting approveTrade...');
+
+      // 调用 SDK approveTrade 接口
+      console.log('[SellPanel] Calling sdk.tools.approveTrade...');
+      const walletPubkey = new PublicKey(walletAddress);
+      const result = await sdk.tools.approveTrade({
+        mint: mintAddress,
+        wallet: { publicKey: walletPubkey }  // SDK 期望一个有 publicKey 属性的对象
+      });
+
+      console.log('[SellPanel] approveTrade SDK result:', result);
+
+      // 获取最新的 blockhash
+      console.log('[SellPanel] Getting latest blockhash...');
+      const connection = sdk.connection || sdk.getConnection();
+      const { blockhash } = await connection.getLatestBlockhash();
+      result.transaction.recentBlockhash = blockhash;
+      result.transaction.feePayer = new PublicKey(walletAddress);
+
+      console.log('[SellPanel] Updated blockhash:', blockhash);
+
+      // 钱包签名
+      console.log('[SellPanel] Requesting wallet signature...');
+      const signedTransaction = await signTransaction(result.transaction);
+
+      console.log('[SellPanel] Wallet signed');
+
+      // 发送交易
+      console.log('[SellPanel] Sending transaction...');
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+
+      console.log('[SellPanel] Waiting for confirmation...');
+      await connection.confirmTransaction(signature, 'confirmed');
+
+      console.log('[SellPanel] ✅ approveTrade successful!');
+      console.log('[SellPanel] Transaction signature:', signature);
+
+      // 显示成功提示框
+      showToast('success', `Successfully approved ${tokenSymbol} for trading`, signature);
+
+      // Approve 成功后，重新检查 cooldown 验证
+      console.log('[SellPanel] Rechecking cooldown validation after approve...');
+      await checkCooldownWithRetry();
+
+    } catch (error) {
+      console.error('[SellPanel] approveTrade failed:', error);
+
+      let errorMessage = error.message;
+      if (error.message.includes('User rejected')) {
+        errorMessage = 'Transaction was rejected by user';
+      } else if (error.message.includes('blockhash')) {
+        errorMessage = 'Network busy, please try again later';
+      }
+
+      // 显示错误提示框
+      showToast('error', errorMessage);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   // Handle sell action
   const handleSell = async () => {
     if (!isValid || parseFloat(amount) <= 0) {
@@ -431,6 +591,17 @@ const SellPanel = React.memo(({
     return calculatedSOL;
   };
 
+  // 监听 tokenBalance 变化，触发 cooldown 验证
+  useEffect(() => {
+    if (tokenBalance > 0 && isReady && sdk && mintAddress && walletAddress) {
+      console.log('[SellPanel] tokenBalance > 0, triggering cooldown validation...');
+      checkCooldownWithRetry();
+    } else {
+      // tokenBalance = 0 时，默认显示 Sell 按钮
+      setNeedsApproval(false);
+    }
+  }, [tokenBalance, isReady, sdk, mintAddress, walletAddress, checkCooldownWithRetry]);
+
   // 监听 amount 变化，触发模拟器调用 (参考 BuyPanel)
   useEffect(() => {
     try {
@@ -519,30 +690,32 @@ const SellPanel = React.memo(({
       </div>
 
 
-      {/* Sell Button */}
+      {/* Sell/Approve Button */}
       <button
-        onClick={handleSell}
+        onClick={needsApproval ? handleApprove : handleSell}
         disabled={
-          !isValid || 
-          hasInsufficientBalance || 
-          parseFloat(amount) <= 0 || 
-          loading || 
-          !connected || 
-          !isReady || 
+          !connected ||
+          !isReady ||
           !mintAddress ||
-          isProcessing
+          (needsApproval ? isApproving : (
+            !isValid ||
+            hasInsufficientBalance ||
+            parseFloat(amount) <= 0 ||
+            loading ||
+            isProcessing
+          ))
         }
-        className="w-full bg-red-500 hover:bg-red-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-nunito font-bold border-2 border-black cartoon-shadow trading-button"
+        className={`w-full ${needsApproval ? 'bg-blue-500 hover:bg-blue-600' : 'bg-red-500 hover:bg-red-600'} disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-lg text-lg font-nunito font-bold border-2 border-black cartoon-shadow trading-button`}
       >
-        {isProcessing 
-          ? `Selling ${tokenSymbol}...` 
-          : !connected
-            ? 'Connect Wallet First'
-            : !isReady
-              ? 'SDK Not Ready'
-              : !mintAddress
-                ? 'Token Address Missing'
-                : `Sell ${tokenSymbol}`
+        {!connected
+          ? 'Connect Wallet First'
+          : !isReady
+            ? 'SDK Not Ready'
+            : !mintAddress
+              ? 'Token Address Missing'
+              : needsApproval
+                ? (isApproving ? `Approving ${tokenSymbol}...` : `Approve ${tokenSymbol}`)
+                : (isProcessing ? `Selling ${tokenSymbol}...` : `Sell ${tokenSymbol}`)
         }
       </button>
       
