@@ -433,7 +433,7 @@ class ChainModule {
 
     } catch (error) {
       // 如果获取失败，返回初始价格 If getting fails, return initial price
-      console.warn(`price: 获取链上价格失败，使用初始价格 Failed to get chain price, using initial price: ${error.message}`);
+      // console.warn(`price: 获取链上价格失败，使用初始价格 Failed to get chain price, using initial price: ${error.message}`);
       
       const initialPrice = CurveAMM.getInitialPrice();
       if (initialPrice === null) {
@@ -637,7 +637,7 @@ class ChainModule {
 
     } catch (error) {
       // 错误处理 Error handling
-      console.error('chain.orders: 获取订单失败', error.message);
+      // console.error('chain.orders: 获取订单失败', error.message);
       throw new Error(`获取订单失败 Failed to get orders: ${error.message}`);
     }
   }

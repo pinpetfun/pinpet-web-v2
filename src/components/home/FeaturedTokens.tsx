@@ -22,7 +22,7 @@ const FeaturedTokens = () => {
           setError(result.error || 'Failed to load featured tokens');
         }
       } catch (err) {
-        console.error('Error loading featured tokens:', err);
+        // console.error('Error loading featured tokens:', err);
         setError('Failed to load featured tokens');
       } finally {
         setLoading(false);

@@ -32,7 +32,7 @@ const PdaInfoDialog = ({ isOpen, onClose, title, pdaType, pdaAddress }) => {
       
       setPdaData(data);
     } catch (error) {
-      console.error('[PdaInfoDialog] Failed to fetch PDA data:', error);
+      // console.error('[PdaInfoDialog] Failed to fetch PDA data:', error);
       setPdaData(null); // Show empty state on error
     } finally {
       setIsLoading(false);

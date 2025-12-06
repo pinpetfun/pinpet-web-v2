@@ -103,7 +103,7 @@ export const formatEventPrice = (price) => {
       return `$${num.toFixed(8).replace(/\.?0+$/, '')}`;
     }
   } catch (error) {
-    console.error('Error formatting event price:', error);
+    // console.error('Error formatting event price:', error);
     return '-';
   }
 };
@@ -132,7 +132,7 @@ export const formatTokenAmount = (amount, precision = 6) => {
       return num.toFixed(2);
     }
   } catch (error) {
-    console.error('Error formatting token amount:', error);
+    // console.error('Error formatting token amount:', error);
     return '-';
   }
 };
@@ -160,7 +160,7 @@ export const formatSolAmount = (amount) => {
       return num.toFixed(2);
     }
   } catch (error) {
-    console.error('Error formatting SOL amount:', error);
+    // console.error('Error formatting SOL amount:', error);
     return '-';
   }
 };

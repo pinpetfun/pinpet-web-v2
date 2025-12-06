@@ -239,7 +239,7 @@ class OrderUtils {
       if (i < orders.length && orders[i] && orders[i].order_pda) {
         // 验证 order_pda 格式 Validate order_pda format
         if (typeof orders[i].order_pda !== 'string' || orders[i].order_pda.trim() === '') {
-          console.warn(`buildOrderAccounts: 订单 ${i} 的 order_pda 格式无效: ${orders[i].order_pda}`);
+          // console.warn(`buildOrderAccounts: 订单 ${i} 的 order_pda 格式无效: ${orders[i].order_pda}`);
           orderAccounts.push(null);
         } else {
           orderAccounts.push(orders[i].order_pda);
@@ -300,7 +300,7 @@ class OrderUtils {
     
     // 如果没找到目标订单 If target order not found
     if (targetIndex === -1) {
-      console.log(`findPrevNext: 未找到指定的订单PDA Order PDA not found: ${findOrderPda}`);
+      // console.log(`findPrevNext: 未找到指定的订单PDA Order PDA not found: ${findOrderPda}`);
       return {
         prevOrder: null,
         nextOrder: null
@@ -319,9 +319,9 @@ class OrderUtils {
       nextOrder = orders[targetIndex + 1];
     }
     
-    console.log(`findPrevNext: 找到目标订单索引 Found target order at index ${targetIndex}`);
-    console.log(`findPrevNext: prevOrder = ${prevOrder ? prevOrder.order_pda : 'null'}`);
-    console.log(`findPrevNext: nextOrder = ${nextOrder ? nextOrder.order_pda : 'null'}`);
+    // console.log(`findPrevNext: 找到目标订单索引 Found target order at index ${targetIndex}`);
+    // console.log(`findPrevNext: prevOrder = ${prevOrder ? prevOrder.order_pda : 'null'}`);
+    // console.log(`findPrevNext: nextOrder = ${nextOrder ? nextOrder.order_pda : 'null'}`);
     
     return {
       prevOrder,

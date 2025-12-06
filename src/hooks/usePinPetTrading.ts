@@ -25,7 +25,7 @@ export const usePinPetTrading = () => {
       const result = await transactionFn();
       return result;
     } catch (err) {
-      console.error('PinPetTrading 交易失败:', err);
+      // console.error('PinPetTrading 交易失败:', err);
       setError(err);
       throw err;
     } finally {
@@ -168,7 +168,7 @@ export const usePinPetTrading = () => {
       setError(null);
 
       // 这里需要外部钱包签名，具体实现依赖于钱包适配器
-      console.log('准备发送交易，需要外部钱包签名');
+      // console.log('准备发送交易，需要外部钱包签名');
       
       // 示例：返回交易对象供外部处理
       return {
@@ -178,7 +178,7 @@ export const usePinPetTrading = () => {
       };
       
     } catch (err) {
-      console.error('发送交易失败:', err);
+      // console.error('发送交易失败:', err);
       setError(err);
       throw err;
     } finally {

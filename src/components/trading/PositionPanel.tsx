@@ -32,23 +32,23 @@ const PositionPanel = ({ mintAddress = null }) => {
   const transformApiData = useCallback((apiOrders) => {
     return apiOrders.map((order) => {
       // 专注调试价格传递问题
-      console.log('[PositionPanel] 🔍 API order latest_price 调试:', {
-        原始latest_price: order.latest_price,
-        类型: typeof order.latest_price,
-        字符串形式: String(order.latest_price),
-        是否为undefined: order.latest_price === undefined,
-        是否为null: order.latest_price === null
-      });
+      // console.log('[PositionPanel] 🔍 API order latest_price 调试:', {
+        // 原始latest_price: order.latest_price,
+        // 类型: typeof order.latest_price,
+        // 字符串形式: String(order.latest_price),
+        // 是否为undefined: order.latest_price === undefined,
+        // 是否为null: order.latest_price === null
+      // });
 
       // 调试 realized_sol_amount
-      console.log('[PositionPanel] 🔍 API order realized_sol_amount 调试:', {
-        原始realized_sol_amount: order.realized_sol_amount,
-        类型: typeof order.realized_sol_amount,
-        字符串形式: String(order.realized_sol_amount),
-        是否为undefined: order.realized_sol_amount === undefined,
-        是否为null: order.realized_sol_amount === null,
-        order_pda: order.order_pda
-      });
+      // console.log('[PositionPanel] 🔍 API order realized_sol_amount 调试:', {
+        // 原始realized_sol_amount: order.realized_sol_amount,
+        // 类型: typeof order.realized_sol_amount,
+        // 字符串形式: String(order.realized_sol_amount),
+        // 是否为undefined: order.realized_sol_amount === undefined,
+        // 是否为null: order.realized_sol_amount === null,
+        // order_pda: order.order_pda
+      // });
       
       // 计算完整的盈亏数据 - 直接使用原始 order 对象
       let profitResult = null;
@@ -67,7 +67,7 @@ const PositionPanel = ({ mintAddress = null }) => {
       const profitDisplay = formatProfitPercentage(profitPercentage);
 
       // 🔍 调试：检查 order_id 在转换前
-      console.log('[PositionPanel transformApiData] 🔍 转换前 order.order_id:', order.order_id);
+      // console.log('[PositionPanel transformApiData] 🔍 转换前 order.order_id:', order.order_id);
 
       const transformedPosition = {
         // UI显示字段（保持现有逻辑）
@@ -111,7 +111,7 @@ const PositionPanel = ({ mintAddress = null }) => {
       };
 
       // 🔍 调试：检查转换后的 order_id
-      console.log('[PositionPanel transformApiData] 🔍 转换后 transformedPosition.order_id:', transformedPosition.order_id);
+      // console.log('[PositionPanel transformApiData] 🔍 转换后 transformedPosition.order_id:', transformedPosition.order_id);
 
       return transformedPosition;
     });
@@ -131,9 +131,9 @@ const PositionPanel = ({ mintAddress = null }) => {
       // ✅ 新接口: 获取用户活跃订单 (一次性获取1000条)
       const ordersUrl = `${config.pinpetApiUrl}/api/orderbook/user/${walletAddress}/active?page=1&page_size=1000`;
 
-      console.log('[PositionPanel] 正在调用的API URL:', ordersUrl);
-      console.log('[PositionPanel] config.pinpetApiUrl:', config.pinpetApiUrl);
-      console.log('[PositionPanel] walletAddress:', walletAddress);
+      // console.log('[PositionPanel] 正在调用的API URL:', ordersUrl);
+      // console.log('[PositionPanel] config.pinpetApiUrl:', config.pinpetApiUrl);
+      // console.log('[PositionPanel] walletAddress:', walletAddress);
 
       const ordersResponse = await fetch(ordersUrl, {
         headers: { 'accept': 'application/json' }
@@ -145,11 +145,11 @@ const PositionPanel = ({ mintAddress = null }) => {
 
       const ordersResult = await ordersResponse.json();
 
-      console.log('[PositionPanel] 订单接口响应:', {
-        code: ordersResult.code,
-        message: ordersResult.message,
-        订单数量: ordersResult.data?.orders?.length || 0
-      });
+      // console.log('[PositionPanel] 订单接口响应:', {
+        // code: ordersResult.code,
+        // message: ordersResult.message,
+        // 订单数量: ordersResult.data?.orders?.length || 0
+      // });
 
       // 检查响应格式 (兼容 code: 200/0 和 success: true 两种格式)
       const isSuccess = ordersResult.code === 200 || ordersResult.code === 0 || ordersResult.success === true;
@@ -160,7 +160,7 @@ const PositionPanel = ({ mintAddress = null }) => {
       const orders = ordersResult.data?.orders || [];
 
       if (orders.length === 0) {
-        console.log('[PositionPanel] 没有活跃订单');
+        // console.log('[PositionPanel] 没有活跃订单');
         setPositions([]);
         setIsLoading(false);
         return;
@@ -169,7 +169,7 @@ const PositionPanel = ({ mintAddress = null }) => {
       // 提取唯一的 mint 地址
       const uniqueMints = [...new Set(orders.map(o => o.mint))];
 
-      console.log('[PositionPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
+      // console.log('[PositionPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
 
       // 批量获取 Token 详情
       const tokensData = await Promise.all(
@@ -181,7 +181,7 @@ const PositionPanel = ({ mintAddress = null }) => {
             });
 
             if (!response.ok) {
-              console.warn(`[PositionPanel] Token ${mint} 获取失败: ${response.status}`);
+              // console.warn(`[PositionPanel] Token ${mint} 获取失败: ${response.status}`);
               return null;
             }
 
@@ -189,13 +189,13 @@ const PositionPanel = ({ mintAddress = null }) => {
 
             // 兼容 code: 200/0 两种格式
             if (result.code !== 200 && result.code !== 0) {
-              console.warn(`[PositionPanel] Token ${mint} 响应错误: ${result.message}`);
+              // console.warn(`[PositionPanel] Token ${mint} 响应错误: ${result.message}`);
               return null;
             }
 
             return result.data;
           } catch (error) {
-            console.error(`[PositionPanel] Token ${mint} 请求失败:`, error);
+            // console.error(`[PositionPanel] Token ${mint} 请求失败:`, error);
             return null;
           }
         })
@@ -209,24 +209,24 @@ const PositionPanel = ({ mintAddress = null }) => {
         }
       });
 
-      console.log('[PositionPanel] Token数据获取完成:', {
-        请求数量: uniqueMints.length,
-        成功数量: Object.keys(tokenMap).length,
-        失败数量: uniqueMints.length - Object.keys(tokenMap).length
-      });
+      // console.log('[PositionPanel] Token数据获取完成:', {
+        // 请求数量: uniqueMints.length,
+        // 成功数量: Object.keys(tokenMap).length,
+        // 失败数量: uniqueMints.length - Object.keys(tokenMap).length
+      // });
 
       // 合并订单数据和 Token 数据
       const enrichedOrders = orders.map(order => {
         const tokenData = tokenMap[order.mint];
 
         if (!tokenData) {
-          console.warn(`[PositionPanel] Token数据缺失 mint: ${order.mint}`);
+          // console.warn(`[PositionPanel] Token数据缺失 mint: ${order.mint}`);
         }
 
         // 🔍 调试：检查原始 order 对象
-        console.log('[PositionPanel] 🔍 原始 API order 对象:', order);
-        console.log('[PositionPanel] 🔍 order.order_id:', order.order_id);
-        console.log('[PositionPanel] 🔍 order 所有键:', Object.keys(order));
+        // console.log('[PositionPanel] 🔍 原始 API order 对象:', order);
+        // console.log('[PositionPanel] 🔍 order.order_id:', order.order_id);
+        // console.log('[PositionPanel] 🔍 order 所有键:', Object.keys(order));
 
         return {
           ...order,
@@ -241,11 +241,11 @@ const PositionPanel = ({ mintAddress = null }) => {
       });
 
       const transformedPositions = transformApiData(enrichedOrders);
-      console.log('[PositionPanel] 转换后的持仓数量:', transformedPositions.length);
+      // console.log('[PositionPanel] 转换后的持仓数量:', transformedPositions.length);
       setPositions(transformedPositions);
 
     } catch (error) {
-      console.error('[PositionPanel] Failed to fetch positions:', error);
+      // console.error('[PositionPanel] Failed to fetch positions:', error);
       setError(error.message);
       setPositions([]);
     } finally {
@@ -280,7 +280,7 @@ const PositionPanel = ({ mintAddress = null }) => {
     try {
       localStorage.setItem('pinpet_position_filter_mode', newMode);
     } catch (error) {
-      console.warn('[PositionPanel] Failed to save filter mode to localStorage:', error);
+      // console.warn('[PositionPanel] Failed to save filter mode to localStorage:', error);
     }
   };
 
@@ -311,15 +311,15 @@ const PositionPanel = ({ mintAddress = null }) => {
   };
 
   const handleClosePosition = (positionId) => {
-    console.log(`平仓持仓 ${positionId}`);
+    // console.log(`平仓持仓 ${positionId}`);
   };
 
   const handlePartialClose = (positionId) => {
-    console.log(`部分平仓 ${positionId}`);
+    // console.log(`部分平仓 ${positionId}`);
   };
 
   const handleBoost = (positionId) => {
-    console.log(`增强持仓 ${positionId}`);
+    // console.log(`增强持仓 ${positionId}`);
   };
 
   return (

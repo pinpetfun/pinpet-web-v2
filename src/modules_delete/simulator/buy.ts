@@ -45,7 +45,7 @@ async function simulateBuy(mint, buySolAmount) {
                 return result;
             }
 
-            console.log("mintInfo.data.details[0].latest_price ",mintInfo.data.details[0].latest_price)
+            // console.log("mintInfo.data.details[0].latest_price ",mintInfo.data.details[0].latest_price)
             if (!mintInfo.data.details[0].latest_price) {
                 currentPrice = CurveAMM.getInitialPrice();
             }else{

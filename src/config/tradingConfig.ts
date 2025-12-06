@@ -23,7 +23,7 @@ export const getSlippageSettings = () => {
       return { ...defaultSlippageSettings, ...JSON.parse(stored) };
     }
   } catch (error) {
-    console.error('获取滑点设置失败:', error);
+    // console.error('获取滑点设置失败:', error);
   }
   return defaultSlippageSettings;
 };
@@ -34,7 +34,7 @@ export const saveSlippageSettings = (settings) => {
     localStorage.setItem(SLIPPAGE_CONFIG.STORAGE_KEY, JSON.stringify(settings));
     return true;
   } catch (error) {
-    console.error('保存滑点设置失败:', error);
+    // console.error('保存滑点设置失败:', error);
     return false;
   }
 };

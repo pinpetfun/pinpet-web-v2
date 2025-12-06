@@ -18,9 +18,9 @@ class ParamModule {
    * @returns {Promise<Object>} 包含交易对象、签名者和账户信息的对象
    */
   async createParams({ partner }) {
-    console.log('Param Module - CreateParams:', { 
-      partner: partner.toString()
-    });
+    // console.log('Param Module - CreateParams:', {
+      // partner: partner.toString()
+    // });
 
     // 计算 Admin 账户地址（全网唯一）
     const [adminAccount] = PublicKey.findProgramAddressSync(
@@ -34,9 +34,9 @@ class ParamModule {
       this.sdk.programId
     );
 
-    console.log('计算的账户地址:');
-    console.log('  Admin账户:', adminAccount.toString());
-    console.log('  合作伙伴参数账户:', paramsAccount.toString());
+    // console.log('计算的账户地址:');
+    // console.log('  Admin账户:', adminAccount.toString());
+    // console.log('  合作伙伴参数账户:', paramsAccount.toString());
 
     // 创建交易指令
     const createParamsIx = await this.sdk.program.methods
@@ -53,7 +53,7 @@ class ParamModule {
     const transaction = new Transaction();
     transaction.add(createParamsIx);
     
-    console.log('合作伙伴参数创建交易已构建');
+    // console.log('合作伙伴参数创建交易已构建');
     
     return {
       transaction,

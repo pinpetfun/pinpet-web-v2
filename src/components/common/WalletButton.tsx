@@ -42,7 +42,7 @@ const WalletButton = () => {
         }
       }
     } catch (error) {
-      console.error('连接钱包失败:', error);
+      // console.error('连接钱包失败:', error);
       if (error.name === 'WalletNotSelectedError') {
         alert('请先选择一个钱包');
       } else {
@@ -59,7 +59,7 @@ const WalletButton = () => {
       // 选择后自动连接
       setTimeout(() => connect(), 100);
     } catch (error) {
-      console.error('选择钱包失败:', error);
+      // console.error('选择钱包失败:', error);
     }
   };
 
@@ -82,14 +82,14 @@ const WalletButton = () => {
       window.open('https://solflare.com/', '_blank');
     } else {
       // 通用处理
-      console.log('打开钱包:', walletName);
+      // console.log('打开钱包:', walletName);
     }
   };
 
   // 查看个人资料
   const handleProfile = () => {
     // 跳转到用户个人资料页面
-    console.log('查看个人资料');
+    // console.log('查看个人资料');
   };
 
   // 获取按钮状态和文本

@@ -88,7 +88,7 @@ export const usePinPetToken = (): PinPetTokenHookResult => {
       const result = await operationFn();
       return result;
     } catch (err) {
-      console.error('PinPetToken 操作失败:', err);
+      // console.error('PinPetToken 操作失败:', err);
       setError(err as Error);
       throw err;
     } finally {
@@ -172,7 +172,7 @@ export const usePinPetToken = (): PinPetTokenHookResult => {
         total: 0.002044280         // SOL - 总费用
       };
     } catch (err) {
-      console.error('估算创建费用失败:', err);
+      // console.error('估算创建费用失败:', err);
       throw err;
     }
   }, []);

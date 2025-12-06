@@ -99,18 +99,18 @@ const SellPanel = React.memo(({
   // 循环检查 validateCooldown (最多10次，每次间隔3秒)
   const checkCooldownWithRetry = useCallback(async (maxRetries = 10, interval = 3000) => {
     if (!isReady || !sdk || !mintAddress || !walletAddress || tokenBalance <= 0) {
-      console.log('[SellPanel] Skip cooldown check - conditions not met');
+      // console.log('[SellPanel] Skip cooldown check - conditions not met');
       setNeedsApproval(false);
       return;
     }
 
-    console.log('[SellPanel] Starting cooldown validation with retry...');
+    // console.log('[SellPanel] Starting cooldown validation with retry...');
     let retries = 0;
 
     const checkOnce = async () => {
       try {
         retries++;
-        console.log(`[SellPanel] Cooldown validation attempt ${retries}/${maxRetries}`);
+        // console.log(`[SellPanel] Cooldown validation attempt ${retries}/${maxRetries}`);
 
         // 调用 validateCooldown，传入 tokenBalance 优化
         const tokenBalanceBN = convertToTokenDecimals(tokenBalance, 6);
@@ -120,43 +120,43 @@ const SellPanel = React.memo(({
           tokenBalance: tokenBalanceBN
         });
 
-        console.log('[SellPanel] Cooldown validation result:', {
-          isValid: result.isValid,
-          exists: result.exists,
-          reason: result.reason,
-          message: result.message
-        });
+        // console.log('[SellPanel] Cooldown validation result:', {
+          // isValid: result.isValid,
+          // exists: result.exists,
+          // reason: result.reason,
+          // message: result.message
+        // });
 
         if (result.isValid) {
           // 验证通过，显示 Sell 按钮
-          console.log('[SellPanel] ✅ Cooldown validation passed');
+          // console.log('[SellPanel] ✅ Cooldown validation passed');
           setNeedsApproval(false);
           return true; // 验证通过，停止重试
         } else {
           // 验证不通过，显示 Approve 按钮
-          console.log('[SellPanel] ❌ Cooldown validation failed:', result.reason);
+          // console.log('[SellPanel] ❌ Cooldown validation failed:', result.reason);
           setNeedsApproval(true);
 
           // 如果还有重试次数，继续重试
           if (retries < maxRetries) {
-            console.log(`[SellPanel] Will retry in ${interval}ms...`);
+            // console.log(`[SellPanel] Will retry in ${interval}ms...`);
             await new Promise(resolve => setTimeout(resolve, interval));
             return await checkOnce();
           } else {
-            console.log('[SellPanel] Max retries reached, needs approval');
+            // console.log('[SellPanel] Max retries reached, needs approval');
             return false;
           }
         }
       } catch (error) {
-        console.error(`[SellPanel] Cooldown validation error (attempt ${retries}):`, error);
+        // console.error(`[SellPanel] Cooldown validation error (attempt ${retries}):`, error);
 
         // 如果还有重试次数，继续重试
         if (retries < maxRetries) {
-          console.log(`[SellPanel] Will retry in ${interval}ms...`);
+          // console.log(`[SellPanel] Will retry in ${interval}ms...`);
           await new Promise(resolve => setTimeout(resolve, interval));
           return await checkOnce();
         } else {
-          console.log('[SellPanel] Max retries reached after errors');
+          // console.log('[SellPanel] Max retries reached after errors');
           setNeedsApproval(false); // 出错时默认显示 Sell 按钮
           return false;
         }
@@ -177,12 +177,12 @@ const SellPanel = React.memo(({
     const maxIterations = 15;
     const precision = new anchor.BN('10000000'); // 精度：0.01 token
     
-    console.log('[SellPanel] 开始二分法优化:', {
-      userInputTokenAmount: userInputTokenAmount.toString(),
-      low: low.toString(),
-      high: high.toString(),
-      precision: precision.toString()
-    });
+    // console.log('[SellPanel] 开始二分法优化:', {
+      // userInputTokenAmount: userInputTokenAmount.toString(),
+      // low: low.toString(),
+      // high: high.toString(),
+      // precision: precision.toString()
+    // });
 
     while (low.lte(high) && iterations < maxIterations) {
       iterations++;
@@ -191,7 +191,7 @@ const SellPanel = React.memo(({
       const mid = low.add(high).div(new anchor.BN('2'));
       
       try {
-        console.log(`[SellPanel] 二分法迭代----`, lastPrice, downOrders1000);
+        // console.log(`[SellPanel] 二分法迭代----`, lastPrice, downOrders1000);
         // 调用模拟器
         const result = await sdk.simulator.simulateTokenSell(
           mintAddress,
@@ -203,12 +203,12 @@ const SellPanel = React.memo(({
         
         const suggestedTokenAmount = result.suggestedTokenAmount || '0';
         
-        console.log(`[SellPanel] 二分法迭代 ${iterations}:`, {
-          mid: mid.toString(),
-          suggestedTokenAmount,
-          userInputTokenAmount: userInputTokenAmount.toString(),
-          satisfies: new anchor.BN(suggestedTokenAmount).lte(userInputTokenAmount)
-        });
+        // console.log(`[SellPanel] 二分法迭代 ${iterations}:`, {
+          // mid: mid.toString(),
+          // suggestedTokenAmount,
+          // userInputTokenAmount: userInputTokenAmount.toString(),
+          // satisfies: new anchor.BN(suggestedTokenAmount).lte(userInputTokenAmount)
+        // });
         
         // 检查是否满足条件：suggestedTokenAmount <= userInputTokenAmount
         if (new anchor.BN(suggestedTokenAmount).lte(userInputTokenAmount)) {
@@ -220,21 +220,21 @@ const SellPanel = React.memo(({
         
         // 精度检查
         if (high.sub(low).lt(precision)) {
-          console.log('[SellPanel] 达到精度要求，提前结束');
+          // console.log('[SellPanel] 达到精度要求，提前结束');
           break;
         }
         
       } catch (error) {
-        console.error(`[SellPanel] 二分法迭代 ${iterations} 失败:`, error);
+        // console.error(`[SellPanel] 二分法迭代 ${iterations} 失败:`, error);
         high = mid.sub(new anchor.BN('1'));
       }
     }
     
-    console.log('[SellPanel] 二分法优化完成:', {
-      iterations,
-      bestTokenAmount: bestTokenAmount.toString(),
-      bestTokenDisplay: (parseFloat(bestTokenAmount.toString()) / 1e6).toFixed(6)
-    });
+    // console.log('[SellPanel] 二分法优化完成:', {
+      // iterations,
+      // bestTokenAmount: bestTokenAmount.toString(),
+      // bestTokenDisplay: (parseFloat(bestTokenAmount.toString()) / 1e6).toFixed(6)
+    // });
     
     return bestTokenAmount;
   }, [sdk, mintAddress, lastPrice, downOrders1000]);
@@ -242,7 +242,7 @@ const SellPanel = React.memo(({
   // 调用 SDK 模拟代币卖出 (参考 BuyPanel)
   const simulateTokenSellOrder = useCallback(async (currentAmount) => {
     if (!isReady || !sdk || !mintAddress || !lastPrice || !downOrders1000) {
-      console.log('[SellPanel] SDK not ready or missing data for sell simulation');
+      // console.log('[SellPanel] SDK not ready or missing data for sell simulation');
       setOptimizedTokenAmount(null);
       return;
     }
@@ -254,14 +254,14 @@ const SellPanel = React.memo(({
       const tokenAmount = parseFloat(currentAmount);
       const initialSellTokenAmount = convertToTokenDecimals(tokenAmount, 6);
 
-      console.log('[SellPanel] 开始优化代币卖出数量:', {
-        mint: mintAddress,
-        currentAmount,
-        tokenAmount,
-        initialSellTokenAmount: initialSellTokenAmount.toString(),
-        hasLastPrice: !!lastPrice,
-        hasOrdersData: !!downOrders1000
-      });
+      // console.log('[SellPanel] 开始优化代币卖出数量:', {
+        // mint: mintAddress,
+        // currentAmount,
+        // tokenAmount,
+        // initialSellTokenAmount: initialSellTokenAmount.toString(),
+        // hasLastPrice: !!lastPrice,
+        // hasOrdersData: !!downOrders1000
+      // });
 
       // 使用二分法优化
       const optimizedSellTokenAmount = await optimizeSellTokenAmount(currentAmount, initialSellTokenAmount);
@@ -275,9 +275,9 @@ const SellPanel = React.memo(({
         downOrders1000
       );
 
-      console.log('[SellPanel] 最终优化结果 JSON:', JSON.stringify(finalResult, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-      , 2));
+      // console.log('[SellPanel] 最终优化结果 JSON:', JSON.stringify(finalResult, (key, value) =>
+        // typeof value === 'bigint' ? value.toString() : value
+      // , 2));
 
       // 保存优化后的数量和 SOL 数量
       setOptimizedTokenAmount({
@@ -288,7 +288,7 @@ const SellPanel = React.memo(({
       });
 
     } catch (error) {
-      console.error('[SellPanel] Token sell simulation failed:', error);
+      // console.error('[SellPanel] Token sell simulation failed:', error);
       setOptimizedTokenAmount(null);
     } finally {
       setIsOptimizing(false);
@@ -329,7 +329,7 @@ const SellPanel = React.memo(({
 
     // 快捷按钮（除了 Reset）立即刷新数据
     if (type !== 'reset' && parseFloat(newAmount) > 0) {
-      console.log('[SellPanel] Quick percentage button clicked, triggering refresh...');
+      // console.log('[SellPanel] Quick percentage button clicked, triggering refresh...');
       onQuickActionRefresh();
     }
   };
@@ -347,7 +347,7 @@ const SellPanel = React.memo(({
 
     // 用户输入时触发防抖刷新
     if (numValue > 0) {
-      console.log('[SellPanel] Amount input changed, triggering debounced refresh...');
+      // console.log('[SellPanel] Amount input changed, triggering debounced refresh...');
       onUserInputDebounce();
     }
   };
@@ -377,14 +377,14 @@ const SellPanel = React.memo(({
 
     try {
       setIsApproving(true);
-      console.log('[SellPanel] Starting approveTrade...');
+      // console.log('[SellPanel] Starting approveTrade...');
 
       const connection = sdk.connection || sdk.getConnection();
       const walletPubkey = new PublicKey(walletAddress);
       const mintPubkey = new PublicKey(mintAddress);
 
       // 1. 检查 Associated Token Account 是否存在
-      console.log('[SellPanel] Checking if user token account exists...');
+      // console.log('[SellPanel] Checking if user token account exists...');
       const userTokenAccount = await getAssociatedTokenAddress(
         mintPubkey,
         walletPubkey
@@ -393,55 +393,55 @@ const SellPanel = React.memo(({
       const tokenAccountInfo = await connection.getAccountInfo(userTokenAccount);
 
       if (!tokenAccountInfo) {
-        console.log('[SellPanel] ❌ User token account does not exist');
+        // console.log('[SellPanel] ❌ User token account does not exist');
         showToast('error', `You don't have any ${tokenSymbol} tokens. Cannot approve trading.`);
         return;
       }
 
-      console.log('[SellPanel] ✅ User token account exists:', userTokenAccount.toString());
+      // console.log('[SellPanel] ✅ User token account exists:', userTokenAccount.toString());
 
       // 2. 调用 SDK approveTrade 接口
-      console.log('[SellPanel] Calling sdk.tools.approveTrade...');
+      // console.log('[SellPanel] Calling sdk.tools.approveTrade...');
       const result = await sdk.tools.approveTrade({
         mint: mintAddress,
         wallet: { publicKey: walletPubkey }
       });
 
-      console.log('[SellPanel] approveTrade SDK result:', result);
+      // console.log('[SellPanel] approveTrade SDK result:', result);
 
       // 3. 获取最新的 blockhash
-      console.log('[SellPanel] Getting latest blockhash...');
+      // console.log('[SellPanel] Getting latest blockhash...');
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = walletPubkey;
 
-      console.log('[SellPanel] Updated blockhash:', blockhash);
+      // console.log('[SellPanel] Updated blockhash:', blockhash);
 
       // 钱包签名
-      console.log('[SellPanel] Requesting wallet signature...');
+      // console.log('[SellPanel] Requesting wallet signature...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[SellPanel] Wallet signed');
+      // console.log('[SellPanel] Wallet signed');
 
       // 发送交易
-      console.log('[SellPanel] Sending transaction...');
+      // console.log('[SellPanel] Sending transaction...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[SellPanel] Waiting for confirmation...');
+      // console.log('[SellPanel] Waiting for confirmation...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[SellPanel] ✅ approveTrade successful!');
-      console.log('[SellPanel] Transaction signature:', signature);
+      // console.log('[SellPanel] ✅ approveTrade successful!');
+      // console.log('[SellPanel] Transaction signature:', signature);
 
       // 显示成功提示框
       showToast('success', `Successfully approved ${tokenSymbol} for trading`, signature);
 
       // Approve 成功后，重新检查 cooldown 验证
-      console.log('[SellPanel] Rechecking cooldown validation after approve...');
+      // console.log('[SellPanel] Rechecking cooldown validation after approve...');
       await checkCooldownWithRetry();
 
     } catch (error) {
-      console.error('[SellPanel] approveTrade failed:', error);
+      // console.error('[SellPanel] approveTrade failed:', error);
 
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {
@@ -460,7 +460,7 @@ const SellPanel = React.memo(({
   // Handle sell action
   const handleSell = async () => {
     if (!isValid || parseFloat(amount) <= 0) {
-      console.log('[SellPanel] Invalid amount or conditions');
+      // console.log('[SellPanel] Invalid amount or conditions');
       return;
     }
 
@@ -487,7 +487,7 @@ const SellPanel = React.memo(({
 
     try {
       setIsProcessing(true);
-      console.log('[SellPanel] 开始卖出流程...');
+      // console.log('[SellPanel] 开始卖出流程...');
 
       // 计算参数 - 优先使用优化后的值
       let sellTokenAmount;
@@ -497,13 +497,13 @@ const SellPanel = React.memo(({
         // 使用优化后的代币数量
         sellTokenAmount = optimizedTokenAmount.tokenAmount;
         displayTokenAmount = parseFloat(optimizedTokenAmount.displayAmount);
-        console.log('[SellPanel] 使用优化后的代币数量:', sellTokenAmount.toString());
+        // console.log('[SellPanel] 使用优化后的代币数量:', sellTokenAmount.toString());
       } else {
         // 使用原始计算的代币数量
         const tokenAmount = parseFloat(amount);
         sellTokenAmount = convertToTokenDecimals(tokenAmount, 6);
         displayTokenAmount = tokenAmount;
-        console.log('[SellPanel] 使用原始计算的代币数量:', sellTokenAmount.toString());
+        // console.log('[SellPanel] 使用原始计算的代币数量:', sellTokenAmount.toString());
       }
       
       // 计算最小 SOL 输出 - 基于优化后的 suggestedSolAmount 或原始计算
@@ -518,20 +518,20 @@ const SellPanel = React.memo(({
       const actualSlippage = getActualSlippage(slippageSettings.slippage);
       const minSolOutput = calculateMinSolOutput(calculatedSOLFloat, actualSlippage);
 
-      console.log('[SellPanel] 卖出参数:', {
-        mintAddress,
-        displayTokenAmount,
-        slippagePercent: slippageSettings.slippage,
-        actualSlippagePercent: actualSlippage,
-        calculatedSOL: calculatedSOLFloat,
-        sellTokenAmount: sellTokenAmount.toString(),
-        minSolOutput: minSolOutput.toString(),
-        walletAddress,
-        usingOptimized: !!(optimizedTokenAmount && optimizedTokenAmount.tokenAmount)
-      });
+      // console.log('[SellPanel] 卖出参数:', {
+        // mintAddress,
+        // displayTokenAmount,
+        // slippagePercent: slippageSettings.slippage,
+        // actualSlippagePercent: actualSlippage,
+        // calculatedSOL: calculatedSOLFloat,
+        // sellTokenAmount: sellTokenAmount.toString(),
+        // minSolOutput: minSolOutput.toString(),
+        // walletAddress,
+        // usingOptimized: !!(optimizedTokenAmount && optimizedTokenAmount.tokenAmount)
+      // });
 
       // 调用 SDK 卖出接口
-      console.log('[SellPanel] 调用 sdk.trading.sell...');
+      // console.log('[SellPanel] 调用 sdk.trading.sell...');
       const result = await sdk.trading.sell({
         mintAccount: mintAddress,
         sellTokenAmount: sellTokenAmount,
@@ -539,45 +539,45 @@ const SellPanel = React.memo(({
         payer: new PublicKey(walletAddress)
       });
 
-      console.log('[SellPanel] SDK 返回结果:', result);
+      // console.log('[SellPanel] SDK 返回结果:', result);
 
       // 获取最新的 blockhash
-      console.log('[SellPanel] 获取最新 blockhash...');
+      // console.log('[SellPanel] 获取最新 blockhash...');
       const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('[SellPanel] 更新 blockhash:', blockhash);
+      // console.log('[SellPanel] 更新 blockhash:', blockhash);
 
       // 钱包签名
-      console.log('[SellPanel] 请求钱包签名...');
+      // console.log('[SellPanel] 请求钱包签名...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[SellPanel] 钱包签名完成');
+      // console.log('[SellPanel] 钱包签名完成');
 
       // 发送交易
-      console.log('[SellPanel] 发送交易...');
+      // console.log('[SellPanel] 发送交易...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[SellPanel] 等待交易确认...');
+      // console.log('[SellPanel] 等待交易确认...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[SellPanel] ✅ 卖出成功!');
-      console.log('[SellPanel] 交易签名:', signature);
+      // console.log('[SellPanel] ✅ 卖出成功!');
+      // console.log('[SellPanel] 交易签名:', signature);
       
       // 调用原有的回调（保持兼容性）
       onSell(amount, 'sell');
       
       // 刷新余额数据
-      console.log('[SellPanel] 刷新余额数据...');
+      // console.log('[SellPanel] 刷新余额数据...');
       onRefreshData();
       
       // 显示成功提示框
       showToast('success', `Successfully sold ${displayTokenAmount.toFixed(6)} ${tokenSymbol}`, signature);
 
     } catch (error) {
-      console.error('[SellPanel] 卖出失败:', error);
+      // console.error('[SellPanel] 卖出失败:', error);
       
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {
@@ -614,7 +614,7 @@ const SellPanel = React.memo(({
   // 监听 tokenBalance 变化，触发 cooldown 验证
   useEffect(() => {
     if (tokenBalance > 0 && isReady && sdk && mintAddress && walletAddress) {
-      console.log('[SellPanel] tokenBalance > 0, triggering cooldown validation...');
+      // console.log('[SellPanel] tokenBalance > 0, triggering cooldown validation...');
       checkCooldownWithRetry();
     } else {
       // tokenBalance = 0 时，默认显示 Sell 按钮
@@ -626,16 +626,16 @@ const SellPanel = React.memo(({
   useEffect(() => {
     try {
       const currentAmount = parseFloat(amount);
-      console.log('[SellPanel] Amount changed:', currentAmount);
+      // console.log('[SellPanel] Amount changed:', currentAmount);
       // 检查是否满足计算条件
       if (currentAmount > 0 && isReady && mintAddress && lastPrice && downOrders1000) {
-        console.log('[SellPanel] Amount changed, triggering sell simulation...');
+        // console.log('[SellPanel] Amount changed, triggering sell simulation...');
         simulateTokenSellOrder(amount);
       } else {
-        console.log('[SellPanel] Amount changed, skipping ', isReady, mintAddress, lastPrice, downOrders1000);
+        // console.log('[SellPanel] Amount changed, skipping ', isReady, mintAddress, lastPrice, downOrders1000);
       }
     } catch (error) {
-      console.error('[SellPanel] useEffect error:', error);
+      // console.error('[SellPanel] useEffect error:', error);
     }
   }, [amount, isReady, mintAddress, lastPrice, downOrders1000, simulateTokenSellOrder]);
 

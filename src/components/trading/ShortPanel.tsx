@@ -129,7 +129,7 @@ const ShortPanel = React.memo(({
           return percentage >= 98 ? 100 : percentage;
         }
       } catch (error) {
-        console.error('[ShortPanel] 动态百分比计算错误:', error);
+        // console.error('[ShortPanel] 动态百分比计算错误:', error);
       }
     }
     return 100; // 默认值
@@ -141,11 +141,11 @@ const ShortPanel = React.memo(({
     const baseValue = calculatePositionValue(amount);
     const adjustedValue = baseValue * (percentage / 100);
     
-    console.log('[ShortPanel] 调整后头寸价值计算:', {
-      percentage: percentage,
-      baseValue: baseValue,
-      adjustedValue: adjustedValue
-    });
+    // console.log('[ShortPanel] 调整后头寸价值计算:', {
+      // percentage: percentage,
+      // baseValue: baseValue,
+      // adjustedValue: adjustedValue
+    // });
     
     return adjustedValue;
   };
@@ -177,7 +177,7 @@ const ShortPanel = React.memo(({
 
     // 快捷按钮（除了 Reset）立即刷新数据
     if (type !== 'reset' && parseFloat(newAmount) > 0) {
-      console.log('[ShortPanel] Quick amount button clicked, triggering refresh...');
+      // console.log('[ShortPanel] Quick amount button clicked, triggering refresh...');
       onQuickActionRefresh();
     }
   };
@@ -192,7 +192,7 @@ const ShortPanel = React.memo(({
 
     // 用户输入时触发防抖刷新
     if (numValue > 0) {
-      console.log('[ShortPanel] Amount input changed, triggering debounced refresh...');
+      // console.log('[ShortPanel] Amount input changed, triggering debounced refresh...');
       onUserInputDebounce();
     }
   };
@@ -203,17 +203,17 @@ const ShortPanel = React.memo(({
     setLeverage(parseFloat(value.toFixed(1)));
 
     // 杠杆调整也触发防抖刷新
-    console.log('[ShortPanel] Leverage changed, triggering debounced refresh...');
+    // console.log('[ShortPanel] Leverage changed, triggering debounced refresh...');
     onUserInputDebounce();
   };
 
   // 计算 stopLossPrice (做空逻辑：价格上涨时止损)
   const calculateStopLossPrice = useCallback((currentLeverage, priceData) => {
-    console.log('[ShortPanel] calculateStopLossPrice called with:', {
-      currentLeverage,
-      priceData,
-      priceDataType: typeof priceData
-    });
+    // console.log('[ShortPanel] calculateStopLossPrice called with:', {
+      // currentLeverage,
+      // priceData,
+      // priceDataType: typeof priceData
+    // });
     
     // 处理不同的价格数据格式
     let rawPrice;
@@ -224,12 +224,12 @@ const ShortPanel = React.memo(({
       // 对象格式 { data: { price: "..." } }
       rawPrice = priceData.data.price;
     } else {
-      console.log('[ShortPanel] calculateStopLossPrice failed: invalid price data format');
+      // console.log('[ShortPanel] calculateStopLossPrice failed: invalid price data format');
       return null;
     }
     
     if (!rawPrice) {
-      console.log('[ShortPanel] calculateStopLossPrice failed: no price value');
+      // console.log('[ShortPanel] calculateStopLossPrice failed: no price value');
       return null;
     }
     
@@ -242,17 +242,17 @@ const ShortPanel = React.memo(({
       const stopLossMultiplier = new Decimal(1).plus(new Decimal(1).div(currentLeverage));
       const stopLossPrice = currentPriceRaw.mul(stopLossMultiplier);
       
-      console.log('[ShortPanel] StopLoss calculation:', {
-        leverage: currentLeverage,
-        stopLossMultiplier: stopLossMultiplier.toString(),
-        currentPriceRaw: currentPriceRaw.toString(),
-        stopLossPrice: stopLossPrice.toString()
-      });
+      // console.log('[ShortPanel] StopLoss calculation:', {
+        // leverage: currentLeverage,
+        // stopLossMultiplier: stopLossMultiplier.toString(),
+        // currentPriceRaw: currentPriceRaw.toString(),
+        // stopLossPrice: stopLossPrice.toString()
+      // });
       
       // 返回整数字符串格式 (u128) - 使用 toFixed(0) 避免科学计数法
       return stopLossPrice.floor().toFixed(0);
     } catch (error) {
-      console.error('[ShortPanel] StopLoss price calculation error:', error);
+      // console.error('[ShortPanel] StopLoss price calculation error:', error);
       setStopLossError(error);
       return null;
     }
@@ -262,7 +262,7 @@ const ShortPanel = React.memo(({
   const simulateStopLoss = useCallback(async (currentAmount, currentLeverage) => {
     // ✅ 简化版：只需检查基本条件
     if (!isReady || !sdk || !mintAddress) {
-      console.log('[ShortPanel] SDK not ready or missing mint address');
+      // console.log('[ShortPanel] SDK not ready or missing mint address');
       return;
     }
 
@@ -278,15 +278,15 @@ const ShortPanel = React.memo(({
       const stopLossPrice = calculateStopLossPrice(currentLeverage, currentPrice);
 
       if (!stopLossPrice) {
-        console.log('[ShortPanel] Failed to calculate stopLossPrice');
+        // console.log('[ShortPanel] Failed to calculate stopLossPrice');
         return;
       }
 
-      console.log('[ShortPanel] Simulating stop loss with:', {
-        mint: mintAddress,
-        sellSolAmount,
-        stopLossPrice
-      });
+      // console.log('[ShortPanel] Simulating stop loss with:', {
+        // mint: mintAddress,
+        // sellSolAmount,
+        // stopLossPrice
+      // });
 
       // ✅ 简化版：只传3个参数，SDK 自动获取价格和订单数据
       const result = await sdk.simulator.simulateShortSolStopLoss(
@@ -295,13 +295,13 @@ const ShortPanel = React.memo(({
         stopLossPrice
       );
 
-      console.log('[ShortPanel] simulateShortSolStopLoss result JSON:', JSON.stringify(result, (key, value) =>
-        typeof value === 'bigint' ? value.toString() : value
-      , 2));
+      // console.log('[ShortPanel] simulateShortSolStopLoss result JSON:', JSON.stringify(result, (key, value) =>
+        // typeof value === 'bigint' ? value.toString() : value
+      // , 2));
       setStopLossAnalysis(result);
 
     } catch (error) {
-      console.error('[ShortPanel] Stop loss simulation failed:', error);
+      // console.error('[ShortPanel] Stop loss simulation failed:', error);
       setStopLossError(error);
     } finally {
       setStopLossLoading(false);
@@ -311,7 +311,7 @@ const ShortPanel = React.memo(({
   // Handle short action - 完整的做空功能
   const handleShort = async () => {
     if (!isValid || parseFloat(amount) <= 0) {
-      console.log('[ShortPanel] Invalid amount or conditions');
+      // console.log('[ShortPanel] Invalid amount or conditions');
       return;
     }
 
@@ -344,7 +344,7 @@ const ShortPanel = React.memo(({
 
     try {
       setIsProcessing(true);
-      console.log('[ShortPanel] 开始做空流程...');
+      // console.log('[ShortPanel] 开始做空流程...');
 
       // 获取滑点设置
       const slippageSettings = getSlippageSettings();
@@ -369,22 +369,22 @@ const ShortPanel = React.memo(({
       const closePrice = new anchor.BN(stopLossAnalysis.executableStopLossPrice.toString());
       const closeInsertIndices = stopLossAnalysis.close_insert_indices;
 
-      console.log('[ShortPanel] 做空参数:', {
-        mintAddress,
-        originalSolAmount,
-        leveragedSolAmount,
-        effectiveLeverage,
-        slippagePercent,
-        borrowSellTokenAmount: borrowSellTokenAmount.toString(),
-        minSolOutput: minSolOutput.toString(),
-        marginSol: marginSol.toString(),
-        closePrice: closePrice.toString(),
-        closeInsertIndices: closeInsertIndices,  // ✅ 输出候选索引数组
-        walletAddress
-      });
+      // console.log('[ShortPanel] 做空参数:', {
+        // mintAddress,
+        // originalSolAmount,
+        // leveragedSolAmount,
+        // effectiveLeverage,
+        // slippagePercent,
+        // borrowSellTokenAmount: borrowSellTokenAmount.toString(),
+        // minSolOutput: minSolOutput.toString(),
+        // marginSol: marginSol.toString(),
+        // closePrice: closePrice.toString(),
+        // closeInsertIndices: closeInsertIndices,  // ✅ 输出候选索引数组
+        // walletAddress
+      // });
 
       // ✅ 调用 SDK 做空接口 - 使用 closeInsertIndices
-      console.log('[ShortPanel] 调用 sdk.trading.short...');
+      // console.log('[ShortPanel] 调用 sdk.trading.short...');
       const result = await sdk.trading.short({
         mintAccount: mintAddress,
         borrowSellTokenAmount: borrowSellTokenAmount,
@@ -395,32 +395,32 @@ const ShortPanel = React.memo(({
         payer: new PublicKey(walletAddress)
       });
 
-      console.log('[ShortPanel] SDK 返回结果:', result);
+      // console.log('[ShortPanel] SDK 返回结果:', result);
 
       // 获取最新的 blockhash
-      console.log('[ShortPanel] 获取最新 blockhash...');
+      // console.log('[ShortPanel] 获取最新 blockhash...');
       const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('[ShortPanel] 更新 blockhash:', blockhash);
+      // console.log('[ShortPanel] 更新 blockhash:', blockhash);
 
       // 钱包签名
-      console.log('[ShortPanel] 请求钱包签名...');
+      // console.log('[ShortPanel] 请求钱包签名...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[ShortPanel] 钱包签名完成');
+      // console.log('[ShortPanel] 钱包签名完成');
 
       // 发送交易
-      console.log('[ShortPanel] 发送交易...');
+      // console.log('[ShortPanel] 发送交易...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[ShortPanel] 等待交易确认...');
+      // console.log('[ShortPanel] 等待交易确认...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[ShortPanel] ✅ 做空成功!');
-      console.log('[ShortPanel] 交易签名:', signature);
+      // console.log('[ShortPanel] ✅ 做空成功!');
+      // console.log('[ShortPanel] 交易签名:', signature);
       
       // 调用原有的回调（保持兼容性）
       onShort(amount, 'short', { leverage, stopLoss, stopLossAnalysis });
@@ -430,7 +430,7 @@ const ShortPanel = React.memo(({
       showToast('success', `Successfully opened short position: ${displayTokenAmount.toFixed(6)} ${tokenSymbol} with ${effectiveLeverage.toFixed(1)}x leverage`, signature);
 
     } catch (error) {
-      console.error('[ShortPanel] 做空失败:', error);
+      // console.error('[ShortPanel] 做空失败:', error);
       
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {
@@ -473,7 +473,7 @@ const ShortPanel = React.memo(({
         
         if (isUserAction) {
           // 用户主动操作：立即执行
-          console.log('[ShortPanel] 用户操作触发，立即计算 Stop Loss...');
+          // console.log('[ShortPanel] 用户操作触发，立即计算 Stop Loss...');
           lastCalculationTimeRef.current = now;
           lastUserInputRef.current = { amount, leverage };
           simulateStopLoss(amount, leverage);
@@ -483,18 +483,18 @@ const ShortPanel = React.memo(({
           const shouldWait = timeSinceLastCalculation < 10000; // 10秒
           
           if (shouldWait) {
-            console.log('[ShortPanel] 数据更新防抖: 距离上次计算', Math.round(timeSinceLastCalculation/1000), '秒，等待中...');
+            // console.log('[ShortPanel] 数据更新防抖: 距离上次计算', Math.round(timeSinceLastCalculation/1000), '秒，等待中...');
             
             // 设置定时器，在剩余时间后执行
             const remainingTime = 10000 - timeSinceLastCalculation;
             debounceTimeoutRef.current = setTimeout(() => {
-              console.log('[ShortPanel] 防抖计时结束，开始计算...');
+              // console.log('[ShortPanel] 防抖计时结束，开始计算...');
               lastCalculationTimeRef.current = Date.now();
               simulateStopLoss(amount, leverage);
             }, remainingTime);
           } else {
             // 可以立即执行
-            console.log('[ShortPanel] 数据更新，立即执行 Stop Loss 计算...');
+            // console.log('[ShortPanel] 数据更新，立即执行 Stop Loss 计算...');
             lastCalculationTimeRef.current = now;
             simulateStopLoss(amount, leverage);
           }
@@ -505,7 +505,7 @@ const ShortPanel = React.memo(({
         setStopLossError(null);
       }
     } catch (error) {
-      console.error('[ShortPanel] useEffect error:', error);
+      // console.error('[ShortPanel] useEffect error:', error);
     }
 
     // 清理函数

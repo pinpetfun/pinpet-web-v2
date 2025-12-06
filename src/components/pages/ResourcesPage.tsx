@@ -70,9 +70,9 @@ export const ResourcesPage: React.FC = () => {
       await connection.confirmTransaction(signature, 'confirmed');
 
       setTxHash(signature);
-      console.log('Transaction successful:', signature);
+      // console.log('Transaction successful:', signature);
     } catch (err: any) {
-      console.error('Claim error:', err);
+      // console.error('Claim error:', err);
       setError(err?.message || 'Failed to claim SOL');
     } finally {
       setLoading(false);

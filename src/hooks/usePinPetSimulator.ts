@@ -19,7 +19,7 @@ export const usePinPetSimulator = () => {
       const result = await simulationFn();
       return result;
     } catch (err) {
-      console.error('PinPetSimulator 模拟失败:', err);
+      // console.error('PinPetSimulator 模拟失败:', err);
       setError(err);
       throw err;
     } finally {
@@ -83,7 +83,7 @@ export const usePinPetSimulator = () => {
       };
 
     } catch (err) {
-      console.error('批量模拟失败:', err);
+      // console.error('批量模拟失败:', err);
       setError(err);
       throw err;
     } finally {

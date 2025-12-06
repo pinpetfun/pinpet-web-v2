@@ -24,7 +24,7 @@ export const useSpinPetToken = () => {
       const result = await operationFn();
       return result;
     } catch (err) {
-      console.error('SpinPetToken 操作失败:', err);
+      // console.error('SpinPetToken 操作失败:', err);
       setError(err);
       throw err;
     } finally {
@@ -108,7 +108,7 @@ export const useSpinPetToken = () => {
         total: 0.002044280         // SOL - 总费用
       };
     } catch (err) {
-      console.error('估算创建费用失败:', err);
+      // console.error('估算创建费用失败:', err);
       throw err;
     }
   }, []);

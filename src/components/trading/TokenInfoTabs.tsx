@@ -22,7 +22,7 @@ const TokenInfoTabs = ({ _tokenName = "BRONK", mintAddress }) => {
       
       // 只处理当前代币的数据
       if (symbol === mintAddress && events && events.length > 0) {
-        console.log('📈 TokenInfoTabs 收到历史事件:', events.length, '条');
+        // console.log('📈 TokenInfoTabs 收到历史事件:', events.length, '条');
         setTradingEvents(events);
         setHistoryLoaded(true);
       }
@@ -42,7 +42,7 @@ const TokenInfoTabs = ({ _tokenName = "BRONK", mintAddress }) => {
       
       // 只处理当前代币的数据
       if (symbol === mintAddress) {
-        console.log('🔔 TokenInfoTabs 收到实时事件:', eventType);
+        // console.log('🔔 TokenInfoTabs 收到实时事件:', eventType);
         
         const newEvent = {
           event_type: eventType,

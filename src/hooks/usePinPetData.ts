@@ -53,7 +53,7 @@ export const usePinPetData = (): PinPetDataHookResult => {
       const result = await requestFn();
       return result;
     } catch (err) {
-      console.error('PinPetData 请求失败:', err);
+      // console.error('PinPetData 请求失败:', err);
       setError(err as Error);
       throw err;
     } finally {

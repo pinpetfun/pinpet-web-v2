@@ -86,7 +86,7 @@ const HotProjectsSection = () => {
           setError(result.error || 'Failed to load hot projects');
         }
       } catch (err) {
-        console.error('Error loading hot projects:', err);
+        // console.error('Error loading hot projects:', err);
         setError('Failed to load hot projects');
       } finally {
         setLoading(false);

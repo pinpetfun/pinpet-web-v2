@@ -32,7 +32,7 @@ class SpinPetSdk {
       throw new Error('defaultDataSource 必须是 "fast" 或 "chain"');
     }
     this.defaultDataSource = options.defaultDataSource || 'fast';
-    console.log('数据源获取方式:', this.defaultDataSource);
+    // console.log('数据源获取方式:', this.defaultDataSource);
 
     // 基础配置
     this.connection = connection;

@@ -29,13 +29,13 @@ class TokenModule {
     uri, 
     payer
   }) {
-    console.log('Token Module - Create:', { 
-      mint: mint.publicKey.toString(), 
-      name, 
-      symbol, 
-      uri, 
-      payer: payer.toString()
-    });
+    // console.log('Token Module - Create:', {
+      // mint: mint.publicKey.toString(),
+      // name,
+      // symbol,
+      // uri,
+      // payer: payer.toString()
+    // });
     
     // 计算借贷流动池账户地址 (borrowing_curve)
     const [curveAccount] = PublicKey.findProgramAddressSync(
@@ -64,11 +64,11 @@ class TokenModule {
       this.sdk.programId
     );
 
-    console.log('计算的账户地址:');
-    console.log('  借贷流动池账户:', curveAccount.toString());
-    console.log('  流动池代币账户:', poolTokenAccount.toString());
-    console.log('  流动池SOL账户:', poolSolAccount.toString());
-    console.log('  参数账户:', this.sdk.paramsAccount?.toString() || '未设置');
+    // console.log('计算的账户地址:');
+    // console.log('  借贷流动池账户:', curveAccount.toString());
+    // console.log('  流动池代币账户:', poolTokenAccount.toString());
+    // console.log('  流动池SOL账户:', poolSolAccount.toString());
+    // console.log('  参数账户:', this.sdk.paramsAccount?.toString() || '未设置');
 
     // 验证必要的配置
     if (!this.sdk.paramsAccount) {
@@ -95,7 +95,7 @@ class TokenModule {
     const transaction = new Transaction();
     transaction.add(createIx);
     
-    console.log('代币创建交易已构建，需要签名者:', [payer.toString(), mint.publicKey.toString()]);
+    // console.log('代币创建交易已构建，需要签名者:', [payer.toString(), mint.publicKey.toString()]);
     
     return {
       transaction,

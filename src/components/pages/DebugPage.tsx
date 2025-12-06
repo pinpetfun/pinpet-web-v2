@@ -99,7 +99,7 @@ const DebugPage = () => {
       }
 
     } catch (err: any) {
-      console.error('查询余额错误:', err);
+      // console.error('查询余额错误:', err);
 
       if (err instanceof TokenAccountNotFoundError) {
         setBalanceError('该钱包没有此代币账户');
@@ -260,7 +260,7 @@ const DebugPage = () => {
       }, 1000);
 
     } catch (err: any) {
-      console.error('转账错误:', err);
+      // console.error('转账错误:', err);
 
       if (err.message?.includes('Invalid public key')) {
         setTransferError('无效的地址格式');

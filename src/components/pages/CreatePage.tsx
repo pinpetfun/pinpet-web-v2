@@ -218,7 +218,7 @@ const CreatePage = () => {
 
       // 生成新的 mint keypair
       const mintKeypair = Keypair.generate();
-      console.log('Generated mint keypair:', mintKeypair.publicKey.toString());
+      // console.log('Generated mint keypair:', mintKeypair.publicKey.toString());
 
       // 判断是否需要购买代币
       const shouldBuy = solAmountToBuy && parseFloat(solAmountToBuy) > 0;
@@ -226,12 +226,12 @@ const CreatePage = () => {
       let result;
 
       if (shouldBuy) {
-        console.log('=== Creating token with buy ===');
+        // console.log('=== Creating token with buy ===');
 
         // 获取初始价格（使用 CurveAMM 静态方法）
         setUploadStatus('Calculating buy amount...');
         const initialPrice = CurveAMM.getInitialPrice();
-        console.log('Initial price:', initialPrice.toString());
+        // console.log('Initial price:', initialPrice.toString());
 
         // 将用户输入的 SOL 转换为 lamports (u64 格式，9 位小数)
         const solAmount = parseFloat(solAmountToBuy);
@@ -250,12 +250,12 @@ const CreatePage = () => {
         // maxSolAmount 是用户输入的 2 倍
         const maxSolAmount = new anchor.BN(Math.floor(solAmount * 2 * 1_000_000_000));
 
-        console.log('Buy parameters:', {
-          solAmount: solAmount,
-          solAmountLamports: solAmountLamports.toString(),
-          buyTokenAmount: buyTokenAmount.toString(),
-          maxSolAmount: maxSolAmount.toString()
-        });
+        // console.log('Buy parameters:', {
+          // solAmount: solAmount,
+          // solAmountLamports: solAmountLamports.toString(),
+          // buyTokenAmount: buyTokenAmount.toString(),
+          // maxSolAmount: maxSolAmount.toString()
+        // });
 
         // 准备 createAndBuy 参数
         const createAndBuyParams = {
@@ -268,22 +268,22 @@ const CreatePage = () => {
           maxSolAmount: maxSolAmount
         };
 
-        console.log('Creating token with buy params:', {
-          mint: mintKeypair.publicKey.toString(),
-          name: createAndBuyParams.name,
-          symbol: createAndBuyParams.symbol,
-          uri: createAndBuyParams.uri,
-          payer: createAndBuyParams.payer.toString(),
-          buyTokenAmount: createAndBuyParams.buyTokenAmount.toString(),
-          maxSolAmount: createAndBuyParams.maxSolAmount.toString()
-        });
+        // console.log('Creating token with buy params:', {
+          // mint: mintKeypair.publicKey.toString(),
+          // name: createAndBuyParams.name,
+          // symbol: createAndBuyParams.symbol,
+          // uri: createAndBuyParams.uri,
+          // payer: createAndBuyParams.payer.toString(),
+          // buyTokenAmount: createAndBuyParams.buyTokenAmount.toString(),
+          // maxSolAmount: createAndBuyParams.maxSolAmount.toString()
+        // });
 
         // 调用 SDK createAndBuy
         setUploadStatus('Preparing createAndBuy transaction...');
         result = await sdk.token.createAndBuy(createAndBuyParams);
 
       } else {
-        console.log('=== Creating token without buy ===');
+        // console.log('=== Creating token without buy ===');
 
         // 准备代币创建参数（符合新接口）
         const tokenParams = {
@@ -294,24 +294,24 @@ const CreatePage = () => {
           payer: new PublicKey(walletAddress)
         };
 
-        console.log('Creating token with params:', {
-          mint: mintKeypair.publicKey.toString(),
-          name: tokenParams.name,
-          symbol: tokenParams.symbol,
-          uri: tokenParams.uri,
-          payer: tokenParams.payer.toString()
-        });
+        // console.log('Creating token with params:', {
+          // mint: mintKeypair.publicKey.toString(),
+          // name: tokenParams.name,
+          // symbol: tokenParams.symbol,
+          // uri: tokenParams.uri,
+          // payer: tokenParams.payer.toString()
+        // });
 
         // 调用 SDK 创建代币交易
         setUploadStatus('Preparing transaction...');
         result = await sdk.token.create(tokenParams);
       }
 
-      console.log('Token creation result:', {
-        hasTransaction: !!result.transaction,
-        signersCount: result.signers?.length || 0,
-        accounts: result.accounts
-      });
+      // console.log('Token creation result:', {
+        // hasTransaction: !!result.transaction,
+        // signersCount: result.signers?.length || 0,
+        // accounts: result.accounts
+      // });
 
       // 获取最新的 blockhash 并设置交易参数
       setUploadStatus('Getting recent blockhash...');
@@ -320,14 +320,14 @@ const CreatePage = () => {
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('Transaction updated with blockhash:', blockhash);
+      // console.log('Transaction updated with blockhash:', blockhash);
 
       // 按照新接口推荐的签名顺序：先 mint keypair 签名，再钱包签名
       setUploadStatus('Signing transaction...');
 
       // 1. 先用 mint keypair 签名（如果有额外的签名者）
       if (result.signers && result.signers.length > 0) {
-        console.log('Signing with mint keypair...');
+        // console.log('Signing with mint keypair...');
         result.transaction.partialSign(...result.signers);
       }
 
@@ -342,7 +342,7 @@ const CreatePage = () => {
         preflightCommitment: 'confirmed'
       });
 
-      console.log('Transaction sent:', signature);
+      // console.log('Transaction sent:', signature);
 
       // 等待交易确认
       setUploadStatus('Waiting for confirmation...');
@@ -361,20 +361,20 @@ const CreatePage = () => {
       setUploadStatus(shouldBuy ? 'Token created and bought successfully!' : 'Token created successfully!');
       setCountdown(3); // 重置倒计时
 
-      console.log('=== Token Creation Success ===');
-      console.log('Mint Address:', mintKeypair.publicKey.toString());
-      console.log('Transaction Signature:', signature);
-      console.log('Explorer URL:', generateTxExplorerUrl(signature));
-      console.log('Curve Account:', result.accounts?.curveAccount?.toString());
-      console.log('Pool Token Account:', result.accounts?.poolTokenAccount?.toString());
-      console.log('Metadata Account:', result.accounts?.metadataAccount?.toString());
+      // console.log('=== Token Creation Success ===');
+      // console.log('Mint Address:', mintKeypair.publicKey.toString());
+      // console.log('Transaction Signature:', signature);
+      // console.log('Explorer URL:', generateTxExplorerUrl(signature));
+      // console.log('Curve Account:', result.accounts?.curveAccount?.toString());
+      // console.log('Pool Token Account:', result.accounts?.poolTokenAccount?.toString());
+      // console.log('Metadata Account:', result.accounts?.metadataAccount?.toString());
       if (shouldBuy) {
-        console.log('Bought with SOL:', solAmountToBuy);
+        // console.log('Bought with SOL:', solAmountToBuy);
       }
-      console.log('============================');
+      // console.log('============================');
 
     } catch (error) {
-      console.error('Token creation failed:', error);
+      // console.error('Token creation failed:', error);
       setTokenCreationStatus('error');
 
       // 用户友好的错误消息
@@ -415,7 +415,7 @@ const CreatePage = () => {
 
       // 组合 JSON metadata
       const metadata = createMetadataJSON();
-      console.log('Creating coin with metadata:', metadata);
+      // console.log('Creating coin with metadata:', metadata);
 
       // 设置上传状态
       setIsUploading(true);
@@ -430,23 +430,23 @@ const CreatePage = () => {
         setUploadStatus('Metadata uploaded successfully!');
 
         // 在后台打印结果
-        console.log('=== Metadata Upload Success ===');
-        console.log('Metadata JSON:', JSON.stringify(metadata, null, 2));
-        console.log('IPFS CID:', result.data.cid);
-        console.log('IPFS URL:', result.data.ipfsUrl);
-        console.log('Gateway URL:', result.data.gatewayUrl);
-        console.log('URI stored in state:', result.data.ipfsUrl);
-        console.log('===============================');
+        // console.log('=== Metadata Upload Success ===');
+        // console.log('Metadata JSON:', JSON.stringify(metadata, null, 2));
+        // console.log('IPFS CID:', result.data.cid);
+        // console.log('IPFS URL:', result.data.ipfsUrl);
+        // console.log('Gateway URL:', result.data.gatewayUrl);
+        // console.log('URI stored in state:', result.data.ipfsUrl);
+        // console.log('===============================');
 
         // 继续创建代币到链上，传入购买金额
         await createTokenOnChain(result.data.ipfsUrl, solAmount);
       } else {
         setUploadStatus(`Upload failed: ${result.error}`);
-        console.error('Failed to upload metadata:', result.error);
+        // console.error('Failed to upload metadata:', result.error);
         alert(`❌ Failed to upload metadata: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error creating coin:', error);
+      // console.error('Error creating coin:', error);
       setUploadStatus(`Error: ${error.message}`);
       alert(`❌ Error: ${error.message}`);
     } finally {

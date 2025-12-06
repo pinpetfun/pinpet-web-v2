@@ -67,7 +67,7 @@ export const calculateTokensFromSOL = (solAmount, lastPrice) => {
     return result;
     
   } catch (error) {
-    console.error('Error calculating tokens from SOL:', error);
+    // console.error('Error calculating tokens from SOL:', error);
     return '0';
   }
 };
@@ -102,7 +102,7 @@ export const calculateSOLFromTokens = (tokenAmount, lastPrice) => {
     return solAmount.toFixed(9);
     
   } catch (error) {
-    console.error('Error calculating SOL from tokens:', error);
+    // console.error('Error calculating SOL from tokens:', error);
     return '0';
   }
 };
@@ -128,7 +128,7 @@ export const formatDisplayNumber = (value, maxDecimals = 6) => {
     return parseFloat(fixed).toString();
     
   } catch (error) {
-    console.error('Error formatting display number:', error);
+    // console.error('Error formatting display number:', error);
     return '0';
   }
 };
@@ -161,7 +161,7 @@ export const getPriceDebugInfo = (lastPrice) => {
       priceDisplay: `1 token = ${formatDisplayNumber(readablePrice, 9)} SOL`
     };
   } catch (error) {
-    console.error('Error getting price debug info:', error);
+    // console.error('Error getting price debug info:', error);
     return {
       rawPrice: 'Error',
       readablePrice: 'Error',
