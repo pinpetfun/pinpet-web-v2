@@ -5,7 +5,6 @@ import { useWalletContext } from '../../contexts/WalletContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { TradingToast } from '../common';
 import { getActualSlippage } from '../../config/tradingConfig';
 
@@ -379,60 +378,36 @@ const SellPanel = React.memo(({
       setIsApproving(true);
       console.log('[SellPanel] 开始 approveTrade 流程...');
 
-      const connection = sdk.connection || sdk.getConnection();
-      const walletPubkey = new PublicKey(walletAddress);
-      const mintPubkey = new PublicKey(mintAddress);
-
       // ========================================
-      // 步骤 1: 检查用户的代币账户 (ATA) 是否存在
-      // ========================================
-      // 说明: approveTrade 需要读取用户的代币账户，如果账户不存在会导致交易失败
-      // 错误: "Attempt to debit an account but found no record of a prior credit"
-      console.log('[SellPanel] 检查用户代币账户是否存在...');
-      const userTokenAccount = await getAssociatedTokenAddress(
-        mintPubkey,
-        walletPubkey
-      );
-
-      const tokenAccountInfo = await connection.getAccountInfo(userTokenAccount);
-
-      if (!tokenAccountInfo) {
-        console.log('[SellPanel] ❌ 用户代币账户不存在');
-        showToast('error', `You don't have any ${tokenSymbol} tokens. Cannot approve trading.`);
-        return;
-      }
-
-      console.log('[SellPanel] ✅ 用户代币账户存在:', userTokenAccount.toString());
-
-      // ========================================
-      // 步骤 2: 调用 SDK approveTrade 接口
+      // 步骤 1: 调用 SDK approveTrade 接口
       // ========================================
       // 功能: 批准当前 token 余额用于交易，创建或更新 TradeCooldown PDA
       // 参数说明:
       //   - mint: 代币地址
       //   - wallet: 用户钱包对象，SDK 会通过 wallet.publicKey 提取公钥
       // 返回: { transaction, signers, accounts }
-      console.log('[SellPanel] 调用 sdk.tools.approveTrade...');
+      console.log('[SellPanel] 调用 sdk.tools.approveTrade...',mintAddress,walletAddress);
       const result = await sdk.tools.approveTrade({
         mint: mintAddress,
-        wallet: { publicKey: walletPubkey }
+        wallet: { publicKey: new PublicKey(walletAddress) }
       });
 
       console.log('[SellPanel] approveTrade 交易构建成功:', result);
 
       // ========================================
-      // 步骤 3: 更新交易的 blockhash 和 feePayer
+      // 步骤 2: 更新交易的 blockhash 和 feePayer
       // ========================================
-      // 说明: SDK 返回的交易已经设置了 blockhash，但为了保险起见重新获取最新的
+      // 说明: 与 BuyPanel/SellPanel 保持一致的方式
       console.log('[SellPanel] 获取最新 blockhash...');
+      const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
-      result.transaction.feePayer = walletPubkey;
+      result.transaction.feePayer = new PublicKey(walletAddress);
 
       console.log('[SellPanel] 更新 blockhash:', blockhash);
 
       // ========================================
-      // 步骤 4: 使用钱包签名
+      // 步骤 3: 使用钱包签名
       // ========================================
       // 说明: SDK 只构建交易，不签名。签名由钱包插件完成（如 Phantom）
       console.log('[SellPanel] 请求钱包签名...');
@@ -441,7 +416,7 @@ const SellPanel = React.memo(({
       console.log('[SellPanel] 钱包签名完成');
 
       // ========================================
-      // 步骤 5: 发送交易并等待确认
+      // 步骤 4: 发送交易并等待确认
       // ========================================
       console.log('[SellPanel] 发送交易...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
@@ -456,7 +431,7 @@ const SellPanel = React.memo(({
       showToast('success', `Successfully approved ${tokenSymbol} for trading`, signature);
 
       // ========================================
-      // 步骤 6: 重新验证 Cooldown 状态
+      // 步骤 5: 重新验证 Cooldown 状态
       // ========================================
       // 说明: Approve 成功后，cooldown PDA 已更新，重新检查验证状态
       console.log('[SellPanel] 重新检查 cooldown 验证...');
@@ -471,8 +446,8 @@ const SellPanel = React.memo(({
         errorMessage = 'Transaction was rejected by user';
       } else if (error.message.includes('blockhash')) {
         errorMessage = 'Network busy, please try again later';
-      } else if (error.message.includes('Attempt to debit')) {
-        errorMessage = 'Token account does not exist. Please ensure you have tokens.';
+      } else if (error.message.includes('Attempt to debit') || error.message.includes('Simulation failed')) {
+        errorMessage = 'Transaction simulation failed. Please try again or check your token balance.';
       }
 
       // 显示错误提示框
