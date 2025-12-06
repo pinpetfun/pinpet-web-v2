@@ -40,23 +40,17 @@ const EventItem = ({ event }) => {
         break;
       case 'FullClose':
       case 'PartialClose':
+      case 'Liquidate':
         tokenAmount = formatTokenAmount(event_data.final_token_amount);
         solAmount = formatSolAmount(event_data.final_sol_amount);
         break;
       default:
-        // TokenCreated, ForceLiquidate, MilestoneDiscount have no amounts
+        // TokenCreated, MilestoneDiscount have no amounts
         break;
     }
     
-    // Get address - special handling for Liquidate events
-    let address;
-    if (event_type === 'ForceLiquidate') {
-      // For Liquidate events, show first 8 characters of PDA
-      const pda = getEventAddress(event_type, event_data);
-      address = pda && pda.length >= 14 ? pda.slice(0, 14) : (pda || '-');
-    } else {
-      address = formatAddress(getEventAddress(event_type, event_data));
-    }
+    // Get address - use standard formatting for all event types
+    const address = formatAddress(getEventAddress(event_type, event_data));
     
     return {
       typeName,

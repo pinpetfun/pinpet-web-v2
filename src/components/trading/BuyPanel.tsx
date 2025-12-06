@@ -100,12 +100,12 @@ const BuyPanel = React.memo(({
     const maxIterations = 15;
     const precision = new anchor.BN('10000000'); // 精度：0.01 token
     
-    console.log('[BuyPanel] 开始二分法优化:', {
-      userSolAmount,
-      low: low.toString(),
-      high: high.toString(),
-      precision: precision.toString()
-    });
+    // console.log('[BuyPanel] 开始二分法优化:', {
+      // userSolAmount,
+      // low: low.toString(),
+      // high: high.toString(),
+      // precision: precision.toString()
+    // });
 
     while (low.lte(high) && iterations < maxIterations) {
       iterations++;
@@ -115,7 +115,7 @@ const BuyPanel = React.memo(({
       
       try {
 
-        console.log(`[BuyPanel] 二分法迭代----`,lastPrice, upOrders1000);
+        // console.log(`[BuyPanel] 二分法迭代----`,lastPrice, upOrders1000);
         // 调用模拟器
         const result = await sdk.simulator.simulateTokenBuy(
           mintAddress,
@@ -127,12 +127,12 @@ const BuyPanel = React.memo(({
         
         const suggestedSolAmount = result.suggestedSolAmount || '0';
         
-        console.log(`[BuyPanel] 二分法迭代 ${iterations}:`, {
-          mid: mid.toString(),
-          suggestedSolAmount,
-          userSolAmount,
-          satisfies: new anchor.BN(suggestedSolAmount).lte(new anchor.BN(userSolAmount))
-        });
+        // console.log(`[BuyPanel] 二分法迭代 ${iterations}:`, {
+          // mid: mid.toString(),
+          // suggestedSolAmount,
+          // userSolAmount,
+          // satisfies: new anchor.BN(suggestedSolAmount).lte(new anchor.BN(userSolAmount))
+        // });
         
         // 检查是否满足条件：suggestedSolAmount <= userSolAmount
         if (new anchor.BN(suggestedSolAmount).lte(new anchor.BN(userSolAmount))) {
@@ -144,21 +144,21 @@ const BuyPanel = React.memo(({
         
         // 精度检查
         if (high.sub(low).lt(precision)) {
-          console.log('[BuyPanel] 达到精度要求，提前结束');
+          // console.log('[BuyPanel] 达到精度要求，提前结束');
           break;
         }
         
       } catch (error) {
-        console.error(`[BuyPanel] 二分法迭代 ${iterations} 失败:`, error);
+        // console.error(`[BuyPanel] 二分法迭代 ${iterations} 失败:`, error);
         high = mid.sub(new anchor.BN('1'));
       }
     }
     
-    console.log('[BuyPanel] 二分法优化完成:', {
-      iterations,
-      bestTokenAmount: bestTokenAmount.toString(),
-      bestTokenDisplay: (parseFloat(bestTokenAmount.toString()) / 1e6).toFixed(6)
-    });
+    // console.log('[BuyPanel] 二分法优化完成:', {
+      // iterations,
+      // bestTokenAmount: bestTokenAmount.toString(),
+      // bestTokenDisplay: (parseFloat(bestTokenAmount.toString()) / 1e6).toFixed(6)
+    // });
     
     return bestTokenAmount;
   }, [sdk, mintAddress, lastPrice, upOrders1000]);
@@ -166,7 +166,7 @@ const BuyPanel = React.memo(({
   // 调用 SDK 模拟代币买入 (参考 LongPanel)
   const simulateTokenBuyOrder = useCallback(async (currentAmount) => {
     if (!isReady || !sdk || !mintAddress || !lastPrice || !upOrders1000) {
-      console.log('[BuyPanel] SDK not ready or missing data for buy simulation');
+      // console.log('[BuyPanel] SDK not ready or missing data for buy simulation');
       setOptimizedTokenAmount(null);
       return;
     }
@@ -179,14 +179,14 @@ const BuyPanel = React.memo(({
       const calculatedTokensFloat = parseFloat(calculatedTokensStr.replace(/,/g, ''));
       const initialBuyTokenAmount = convertToTokenDecimals(calculatedTokensFloat, 6);
 
-      console.log('[BuyPanel] 开始优化代币购买数量:', {
-        mint: mintAddress,
-        currentAmount,
-        calculatedTokens: calculatedTokensFloat,
-        initialBuyTokenAmount: initialBuyTokenAmount.toString(),
-        hasLastPrice: !!lastPrice,
-        hasOrdersData: !!upOrders1000
-      });
+      // console.log('[BuyPanel] 开始优化代币购买数量:', {
+        // mint: mintAddress,
+        // currentAmount,
+        // calculatedTokens: calculatedTokensFloat,
+        // initialBuyTokenAmount: initialBuyTokenAmount.toString(),
+        // hasLastPrice: !!lastPrice,
+        // hasOrdersData: !!upOrders1000
+      // });
 
       // 使用二分法优化
       const optimizedBuyTokenAmount = await optimizeBuyTokenAmount(currentAmount, initialBuyTokenAmount);
@@ -200,9 +200,9 @@ const BuyPanel = React.memo(({
         upOrders1000
       );
 
-      console.log('[BuyPanel] 最终优化结果 JSON:', JSON.stringify(finalResult, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-      , 2));
+      // console.log('[BuyPanel] 最终优化结果 JSON:', JSON.stringify(finalResult, (key, value) =>
+        // typeof value === 'bigint' ? value.toString() : value
+      // , 2));
 
       // 保存优化后的数量
       setOptimizedTokenAmount({
@@ -212,7 +212,7 @@ const BuyPanel = React.memo(({
       });
 
     } catch (error) {
-      console.error('[BuyPanel] Token buy simulation failed:', error);
+      // console.error('[BuyPanel] Token buy simulation failed:', error);
       setOptimizedTokenAmount(null);
     } finally {
       setIsOptimizing(false);
@@ -222,14 +222,14 @@ const BuyPanel = React.memo(({
   // Calculate how many tokens user will receive using precise decimal calculation
   const calculateTokens = (solAmount) => {
     if (!lastPrice) {
-      console.log('[BuyPanel] No lastPrice data available');
+      // console.log('[BuyPanel] No lastPrice data available');
       return '0';
     }
-    console.log('[BuyPanel] Calculating tokens:', { solAmount, lastPrice });
+    // console.log('[BuyPanel] Calculating tokens:', { solAmount, lastPrice });
     const tokensAmount = calculateTokensFromSOL(solAmount, lastPrice);
-    console.log('[BuyPanel] Raw tokens amount:', tokensAmount);
+    // console.log('[BuyPanel] Raw tokens amount:', tokensAmount);
     const formatted = formatDisplayNumber(tokensAmount, 6);
-    console.log('[BuyPanel] Formatted tokens:', formatted);
+    // console.log('[BuyPanel] Formatted tokens:', formatted);
     return formatted;
   };
 
@@ -260,7 +260,7 @@ const BuyPanel = React.memo(({
 
     // 快捷按钮（除了 Reset）立即刷新数据
     if (type !== 'reset' && parseFloat(newAmount) > 0) {
-      console.log('[BuyPanel] Quick amount button clicked, triggering refresh...');
+      // console.log('[BuyPanel] Quick amount button clicked, triggering refresh...');
       onQuickActionRefresh();
     }
   };
@@ -278,7 +278,7 @@ const BuyPanel = React.memo(({
 
     // 用户输入时触发防抖刷新
     if (numValue > 0) {
-      console.log('[BuyPanel] Amount input changed, triggering debounced refresh...');
+      // console.log('[BuyPanel] Amount input changed, triggering debounced refresh...');
       onUserInputDebounce();
     }
   };
@@ -286,7 +286,7 @@ const BuyPanel = React.memo(({
   // Handle buy action
   const handleBuy = async () => {
     if (!isValid || parseFloat(amount) <= 0) {
-      console.log('[BuyPanel] Invalid amount or conditions');
+      // console.log('[BuyPanel] Invalid amount or conditions');
       return;
     }
 
@@ -313,7 +313,7 @@ const BuyPanel = React.memo(({
 
     try {
       setIsProcessing(true);
-      console.log('[BuyPanel] 开始买入流程...');
+      // console.log('[BuyPanel] 开始买入流程...');
 
       // 计算参数 - 优先使用优化后的值
       const solAmount = parseFloat(amount);
@@ -324,36 +324,36 @@ const BuyPanel = React.memo(({
         // 使用优化后的代币数量
         buyTokenAmount = optimizedTokenAmount.tokenAmount;
         displayTokenAmount = parseFloat(optimizedTokenAmount.displayAmount);
-        console.log('[BuyPanel] 使用优化后的代币数量:', buyTokenAmount.toString());
+        // console.log('[BuyPanel] 使用优化后的代币数量:', buyTokenAmount.toString());
       } else {
         // 使用原始计算的代币数量
         const calculatedTokensStr = calculateTokens(amount);
         const calculatedTokensFloat = parseFloat(calculatedTokensStr.replace(/,/g, ''));
         buyTokenAmount = convertToTokenDecimals(calculatedTokensFloat, 6);
         displayTokenAmount = calculatedTokensFloat;
-        console.log('[BuyPanel] 使用原始计算的代币数量:', buyTokenAmount.toString());
+        // console.log('[BuyPanel] 使用原始计算的代币数量:', buyTokenAmount.toString());
       }
       
       const actualSlippage = getActualSlippage(slippageSettings.slippage);
       const maxSolAmount = calculateMaxSolAmount(solAmount, actualSlippage);
 
-      console.log('[BuyPanel] 买入参数:', {
-        mintAddress,
-        solAmount,
-        slippagePercent: slippageSettings.slippage,
-        actualSlippagePercent: actualSlippage,
-        displayTokenAmount,
-        buyTokenAmount: buyTokenAmount.toString(),
-        maxSolAmount: maxSolAmount.toString(),
-        walletAddress,
-        usingOptimized: !!(optimizedTokenAmount && optimizedTokenAmount.tokenAmount)
-      });
+      // console.log('[BuyPanel] 买入参数:', {
+        // mintAddress,
+        // solAmount,
+        // slippagePercent: slippageSettings.slippage,
+        // actualSlippagePercent: actualSlippage,
+        // displayTokenAmount,
+        // buyTokenAmount: buyTokenAmount.toString(),
+        // maxSolAmount: maxSolAmount.toString(),
+        // walletAddress,
+        // usingOptimized: !!(optimizedTokenAmount && optimizedTokenAmount.tokenAmount)
+      // });
 
 
 
 
       // 调用 SDK 买入接口
-      console.log('[BuyPanel] 调用 sdk.trading.buy...');
+      // console.log('[BuyPanel] 调用 sdk.trading.buy...');
       const result = await sdk.trading.buy({
         mintAccount: mintAddress,
         buyTokenAmount: buyTokenAmount,
@@ -361,45 +361,45 @@ const BuyPanel = React.memo(({
         payer: new PublicKey(walletAddress)
       });
 
-      console.log('[BuyPanel] SDK 返回结果:', result);
+      // console.log('[BuyPanel] SDK 返回结果:', result);
 
       // 获取最新的 blockhash
-      console.log('[BuyPanel] 获取最新 blockhash...');
+      // console.log('[BuyPanel] 获取最新 blockhash...');
       const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('[BuyPanel] 更新 blockhash:', blockhash);
+      // console.log('[BuyPanel] 更新 blockhash:', blockhash);
 
       // 钱包签名
-      console.log('[BuyPanel] 请求钱包签名...');
+      // console.log('[BuyPanel] 请求钱包签名...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[BuyPanel] 钱包签名完成');
+      // console.log('[BuyPanel] 钱包签名完成');
 
       // 发送交易
-      console.log('[BuyPanel] 发送交易...');
+      // console.log('[BuyPanel] 发送交易...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[BuyPanel] 等待交易确认...');
+      // console.log('[BuyPanel] 等待交易确认...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[BuyPanel] ✅ 买入成功!');
-      console.log('[BuyPanel] 交易签名:', signature);
+      // console.log('[BuyPanel] ✅ 买入成功!');
+      // console.log('[BuyPanel] 交易签名:', signature);
       
       // 调用原有的回调（保持兼容性）
       onBuy(amount, 'buy');
       
       // 刷新余额数据
-      console.log('[BuyPanel] 刷新余额数据...');
+      // console.log('[BuyPanel] 刷新余额数据...');
       onRefreshData();
       
       // 显示成功提示框
       showToast('success', `Successfully bought ${displayTokenAmount.toFixed(6)} ${tokenSymbol}`, signature);
 
     } catch (error) {
-      console.error('[BuyPanel] 买入失败:', error);
+      // console.error('[BuyPanel] 买入失败:', error);
       
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {
@@ -435,17 +435,17 @@ const BuyPanel = React.memo(({
   useEffect(() => {
     try {
       const currentAmount = parseFloat(amount);
-      console.log('[BuyPanel] Amount changed:', currentAmount);
+      // console.log('[BuyPanel] Amount changed:', currentAmount);
       // 检查是否满足计算条件
       if (currentAmount > 0 && isReady && mintAddress && lastPrice && upOrders1000) {
-        console.log('[BuyPanel] Amount changed, triggering buy simulation...');
+        // console.log('[BuyPanel] Amount changed, triggering buy simulation...');
         simulateTokenBuyOrder(amount);
       }else{
-        console.log('[BuyPanel] Amount changed, skipping ',isReady , mintAddress ,lastPrice, upOrders1000);
+        // console.log('[BuyPanel] Amount changed, skipping ',isReady , mintAddress ,lastPrice, upOrders1000);
 
       }
     } catch (error) {
-      console.error('[BuyPanel] useEffect error:', error);
+      // console.error('[BuyPanel] useEffect error:', error);
     }
   }, [amount, isReady, mintAddress, lastPrice, upOrders1000, simulateTokenBuyOrder]);
 

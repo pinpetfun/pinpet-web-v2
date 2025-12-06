@@ -82,7 +82,7 @@ export const fetchTokenList = async (sortBy: 'hot' | 'created' | 'ascending' = '
       nextCursor: result.data.next_cursor
     }
   } catch (error) {
-    console.error('Error fetching token list:', error)
+    // console.error('Error fetching token list:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -182,7 +182,7 @@ export const fetchHotProjects = async (limit: number = 3) => {
       data: hotProjects
     }
   } catch (error) {
-    console.error('Error fetching hot projects:', error)
+    // console.error('Error fetching hot projects:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -221,7 +221,7 @@ export const fetchFeaturedTokens = async (limit: number = 15) => {
       data: featuredTokens
     }
   } catch (error) {
-    console.error('Error fetching featured tokens:', error)
+    // console.error('Error fetching featured tokens:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

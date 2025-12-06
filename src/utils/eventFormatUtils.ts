@@ -103,7 +103,7 @@ export const formatEventPrice = (price) => {
       return `$${num.toFixed(8).replace(/\.?0+$/, '')}`;
     }
   } catch (error) {
-    console.error('Error formatting event price:', error);
+    // console.error('Error formatting event price:', error);
     return '-';
   }
 };
@@ -132,7 +132,7 @@ export const formatTokenAmount = (amount, precision = 6) => {
       return num.toFixed(2);
     }
   } catch (error) {
-    console.error('Error formatting token amount:', error);
+    // console.error('Error formatting token amount:', error);
     return '-';
   }
 };
@@ -160,7 +160,7 @@ export const formatSolAmount = (amount) => {
       return num.toFixed(2);
     }
   } catch (error) {
-    console.error('Error formatting SOL amount:', error);
+    // console.error('Error formatting SOL amount:', error);
     return '-';
   }
 };
@@ -185,12 +185,12 @@ export const getEventTypeName = (eventType) => {
     'TokenCreated': 'Create',
     'BuySell': (data) => data.is_buy ? 'Buy' : 'Sell',
     'LongShort': (data) => data.order_type === 1 ? 'Long' : 'Short',
-    'ForceLiquidate': 'Liquidate',
+    'Liquidate': 'Liquidate',
     'FullClose': (data) => data.is_close_long ? 'Close Long' : 'Close Short',
     'PartialClose': (data) => data.is_close_long ? 'Close Long' : 'Close Short',
     'MilestoneDiscount': 'Fee Update'
   };
-  
+
   return typeNames[eventType] || eventType;
 };
 
@@ -206,8 +206,8 @@ export const getEventAddress = (eventType, eventData) => {
     case 'BuySell':
     case 'MilestoneDiscount':
       return eventData.payer;
-    case 'ForceLiquidate':
-      return eventData.order_pda;
+    case 'Liquidate':
+      return eventData.user_sol_account;
     case 'LongShort':
       return eventData.user;
     case 'FullClose':

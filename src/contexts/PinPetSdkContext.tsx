@@ -82,9 +82,9 @@ export const PinPetSdkProvider: React.FC<PinPetSdkProviderProps> = ({ children }
       setError(null);
 
       // 调试 PinPetSdk 对象
-      console.log('PinPetSdk 对象:', PinPetSdk);
-      console.log('PinPetSdk 的keys:', Object.keys(PinPetSdk));
-      console.log('PinPetSdk.getDefaultOptions:', typeof PinPetSdk.getDefaultOptions);
+      // console.log('PinPetSdk 对象:', PinPetSdk);
+      // console.log('PinPetSdk 的keys:', Object.keys(PinPetSdk));
+      // console.log('PinPetSdk.getDefaultOptions:', typeof PinPetSdk.getDefaultOptions);
 
       // 创建 Solana 连接
       const rpcUrl: string = import.meta.env.VITE_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
@@ -125,14 +125,14 @@ export const PinPetSdkProvider: React.FC<PinPetSdkProviderProps> = ({ children }
       setConfig(sdkConfig);
       setStatus('ready');
 
-      console.log('PinPetSdk 初始化成功:', {
-        network,
-        rpcUrl,
-        dataSource: sdkConfig.defaultDataSource
-      });
+      // console.log('PinPetSdk 初始化成功:', {
+        // network,
+        // rpcUrl,
+        // dataSource: sdkConfig.defaultDataSource
+      // });
 
     } catch (err) {
-      console.error('PinPetSdk 初始化失败:', err);
+      // console.error('PinPetSdk 初始化失败:', err);
       setError(err as Error);
       setStatus('error');
     }
@@ -142,9 +142,9 @@ export const PinPetSdkProvider: React.FC<PinPetSdkProviderProps> = ({ children }
   useEffect(() => {
     if (sdk) {
       if (connected && walletAddress) {
-        console.log('钱包已连接，SDK 可以执行交易:', walletAddress);
+        // console.log('钱包已连接，SDK 可以执行交易:', walletAddress);
       } else {
-        console.log('钱包未连接，SDK 仅可查询数据');
+        // console.log('钱包未连接，SDK 仅可查询数据');
       }
     }
   }, [sdk, connected, walletAddress]);

@@ -18,9 +18,9 @@ interface PositionItemProps {
 
 const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }: PositionItemProps) => {
   // 🔍 调试：打印完整的 position 对象
-  console.log('[PositionItem] 🔍 完整 position 对象:', position);
-  console.log('[PositionItem] 🔍 position.order_id:', position?.order_id);
-  console.log('[PositionItem] 🔍 position 所有键:', Object.keys(position || {}));
+  // console.log('[PositionItem] 🔍 完整 position 对象:', position);
+  // console.log('[PositionItem] 🔍 position.order_id:', position?.order_id);
+  // console.log('[PositionItem] 🔍 position 所有键:', Object.keys(position || {}));
 
   const {
     tokenImage,
@@ -130,11 +130,11 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
 
   // 处理部分平仓确认 (now handled in PartialCloseDialog.jsx)
   const handlePartialCloseConfirm = async ({ position, buyAmount, estimatedReceive }) => {
-    console.log('[PartialClose] Partial close confirmed in dialog:', {
-      position: position.id,
-      buyAmount,
-      estimatedReceive
-    });
+    // console.log('[PartialClose] Partial close confirmed in dialog:', {
+      // position: position.id,
+      // buyAmount,
+      // estimatedReceive
+    // });
 
     // The actual partial close logic is now handled in PartialCloseDialog.jsx
     // This callback is mainly for logging/tracking purposes
@@ -170,34 +170,34 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
 
     if (order_id === undefined || order_id === null) {
       showToast('error', 'Order ID not found');
-      console.log("order_id=",order_id)
+      // console.log("order_id=",order_id)
       return;
     }
 
     try {
       setIsProcessing(true);
-      console.log('[PositionItem] 开始平仓流程...', {
-        orderType: order_type,
-        direction,
-        mint,
-        orderId: order_id,
-        lockLpTokenAmount: lock_lp_token_amount,
-        lockLpSolAmount: lock_lp_sol_amount
-      });
+      // console.log('[PositionItem] 开始平仓流程...', {
+        // orderType: order_type,
+        // direction,
+        // mint,
+        // orderId: order_id,
+        // lockLpTokenAmount: lock_lp_token_amount,
+        // lockLpSolAmount: lock_lp_sol_amount
+      // });
 
       let result;
       let closeOrderIndices;
 
       if (order_type === 1) { // Long 平仓
-        console.log('[PositionItem] 执行 Long 平仓...');
+        // console.log('[PositionItem] 执行 Long 平仓...');
 
         // 使用模拟器获取平仓候选索引
         try {
           const closeIndicesResult = await sdk.simulator.simulateLongClose(mint, order_id);
           closeOrderIndices = closeIndicesResult.closeOrderIndices;
-          console.log('[PositionItem] 做多平仓候选索引:', closeOrderIndices);
+          // console.log('[PositionItem] 做多平仓候选索引:', closeOrderIndices);
         } catch (error) {
-          console.error('[PositionItem] 生成做多平仓索引失败:', error);
+          // console.error('[PositionItem] 生成做多平仓索引失败:', error);
           showToast('error', 'Failed to generate close indices');
           return;
         }
@@ -212,15 +212,15 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
           userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       } else { // Short 平仓
-        console.log('[PositionItem] 执行 Short 平仓...');
+        // console.log('[PositionItem] 执行 Short 平仓...');
 
         // 使用模拟器获取平仓候选索引
         try {
           const closeIndicesResult = await sdk.simulator.simulateShortClose(mint, order_id);
           closeOrderIndices = closeIndicesResult.closeOrderIndices;
-          console.log('[PositionItem] 做空平仓候选索引:', closeOrderIndices);
+          // console.log('[PositionItem] 做空平仓候选索引:', closeOrderIndices);
         } catch (error) {
-          console.error('[PositionItem] 生成做空平仓索引失败:', error);
+          // console.error('[PositionItem] 生成做空平仓索引失败:', error);
           showToast('error', 'Failed to generate close indices');
           return;
         }
@@ -236,32 +236,32 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
         });
       }
 
-      console.log('[PositionItem] SDK 返回结果:', result);
+      // console.log('[PositionItem] SDK 返回结果:', result);
 
       // 获取最新的 blockhash
-      console.log('[PositionItem] 获取最新 blockhash...');
+      // console.log('[PositionItem] 获取最新 blockhash...');
       const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('[PositionItem] 更新 blockhash:', blockhash);
+      // console.log('[PositionItem] 更新 blockhash:', blockhash);
 
       // 钱包签名
-      console.log('[PositionItem] 请求钱包签名...');
+      // console.log('[PositionItem] 请求钱包签名...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[PositionItem] 钱包签名完成');
+      // console.log('[PositionItem] 钱包签名完成');
 
       // 发送交易
-      console.log('[PositionItem] 发送交易...');
+      // console.log('[PositionItem] 发送交易...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[PositionItem] 等待交易确认...');
+      // console.log('[PositionItem] 等待交易确认...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[PositionItem] ✅ 平仓成功!');
-      console.log('[PositionItem] 交易签名:', signature);
+      // console.log('[PositionItem] ✅ 平仓成功!');
+      // console.log('[PositionItem] 交易签名:', signature);
 
       // 显示成功提示框
       showToast('success', `Successfully closed ${direction} position`, signature);
@@ -279,7 +279,7 @@ const PositionItem = ({ position, onClose, onPartialClose, _onInfo, onRefresh }:
       }
 
     } catch (error) {
-      console.error('[PositionItem] 平仓失败:', error);
+      // console.error('[PositionItem] 平仓失败:', error);
 
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {

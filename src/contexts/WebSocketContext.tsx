@@ -82,7 +82,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const connectSocket = useCallback((): Socket => {
     // 如果已经有socket实例（无论是否连接），直接返回
     if (socketRef.current) {
-      console.log('🔗 复用现有Socket连接, 状态:', socketRef.current.connected ? '已连接' : '连接中');
+      // console.log('🔗 复用现有Socket连接, 状态:', socketRef.current.connected ? '已连接' : '连接中');
       return socketRef.current;
     }
 
@@ -90,7 +90,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const WS_BASE_URL: string = WEBSOCKET_URL.endsWith('/kline') ? WEBSOCKET_URL.replace('/kline', '') : WEBSOCKET_URL;
     const NAMESPACE: string = '/kline';
 
-    console.log('🔌 创建新的 WebSocket 连接:', `${WS_BASE_URL}${NAMESPACE}`);
+    // console.log('🔌 创建新的 WebSocket 连接:', `${WS_BASE_URL}${NAMESPACE}`);
 
     const socket: Socket = io(`${WS_BASE_URL}${NAMESPACE}`, {
       transports: ['websocket', 'polling'],
@@ -105,21 +105,21 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     // 连接事件
     socket.on('connect', () => {
-      console.log('✅ WebSocket 已连接, Socket ID:', socket.id);
+      // console.log('✅ WebSocket 已连接, Socket ID:', socket.id);
       setConnectionStatus('connected');
 
       // 重新订阅所有现有的订阅
       for (const [_key, subscription] of subscriptionsRef.current) {
-        console.log('🔄 重新订阅:', subscription);
+        // console.log('🔄 重新订阅:', subscription);
         socket.emit('subscribe', subscription);
       }
 
       // 开始心跳测试
-      console.log('✅ 连接成功，开始心跳测试');
+      // console.log('✅ 连接成功，开始心跳测试');
       // 每30秒手动发送一次ping来测试
       const heartbeatInterval = setInterval(() => {
         if (socket.connected) {
-          console.log('📤 手动发送心跳包');
+          // console.log('📤 手动发送心跳包');
           socket.emit('ping');
         } else {
           clearInterval(heartbeatInterval);
@@ -131,7 +131,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     });
 
     socket.on('disconnect', (reason: string) => {
-      console.log('❌ WebSocket 断开连接:', reason);
+      // console.log('❌ WebSocket 断开连接:', reason);
       setConnectionStatus('disconnected');
 
       // 清理心跳间隔
@@ -142,25 +142,25 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     });
 
     socket.on('connect_error', (error: Error) => {
-      console.log('💥 连接错误:', error.message);
+      // console.log('💥 连接错误:', error.message);
       setConnectionStatus('error');
     });
 
     // 数据事件
     socket.on('connection_success', (data: any) => {
-      console.log('🎉 连接成功:', data);
+      // console.log('🎉 连接成功:', data);
     });
 
     socket.on('subscription_confirmed', (data: any) => {
-      console.log('✅ 订阅确认:', data);
+      // console.log('✅ 订阅确认:', data);
     });
 
     socket.on('history_data', (data: any) => {
-      console.log('📈 收到历史数据:', {
-        symbol: data.symbol,
-        interval: data.interval,
-        dataPoints: data.data?.length
-      });
+      // console.log('📈 收到历史数据:', {
+        // symbol: data.symbol,
+        // interval: data.interval,
+        // dataPoints: data.data?.length
+      // });
 
       if (data.data && data.data.length > 0) {
         const sortedData = data.data.sort((a: any, b: any) => a.time - b.time);
@@ -180,11 +180,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     socket.on('kline_data', (data: any) => { 
       if (data.data) {
-        console.log('🔔 收到实时K线数据:', {
-          symbol: data.symbol,
-          interval: data.interval,
-          time: new Date(data.data.time * 1000).toISOString()
-        });
+        // console.log('🔔 收到实时K线数据:', {
+          // symbol: data.symbol,
+          // interval: data.interval,
+          // time: new Date(data.data.time * 1000).toISOString()
+        // });
 
         const newCandle: KlineData = {
           time: data.data.time,
@@ -217,35 +217,35 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     });
 
     socket.on('error', (error: any) => {
-      console.log('❌ WebSocket 错误:', error);
+      // console.log('❌ WebSocket 错误:', error);
     });
 
     // 心跳包监听 (用于调试)
     socket.on('ping', () => {
-      console.log('💓 收到服务器 ping');
+      // console.log('💓 收到服务器 ping');
     });
 
     socket.on('pong', (ms: number) => {
-      console.log('💗 收到服务器 pong, 延迟:', ms, 'ms');
+      // console.log('💗 收到服务器 pong, 延迟:', ms, 'ms');
     });
 
     // Socket.IO 引擎级别的心跳包事件
     socket.io.engine.on('ping', () => {
-      console.log('💓 引擎级别 ping');
+      // console.log('💓 引擎级别 ping');
     });
 
     socket.io.engine.on('pong', () => {
-      console.log('💗 引擎级别 pong');
+      // console.log('💗 引擎级别 pong');
     });
 
     // 监听历史事件数据
     socket.on('history_event_data', (data: any) => {
-      console.log('📈 收到历史事件数据:', {
-        symbol: data.symbol,
-        eventCount: data.data?.length,
-        hasMore: data.has_more,
-        totalCount: data.total_count
-      });
+      // console.log('📈 收到历史事件数据:', {
+        // symbol: data.symbol,
+        // eventCount: data.data?.length,
+        // hasMore: data.has_more,
+        // totalCount: data.total_count
+      // });
 
       if (data.data && data.data.length > 0) {
         // 触发自定义事件，传递历史事件数据
@@ -262,11 +262,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     // 监听实时事件数据
     socket.on('event_data', (data: any) => {
-      console.log('🔔 收到实时事件数据:', {
-        symbol: data.symbol,
-        eventType: data.event_type,
-        timestamp: new Date(data.timestamp).toISOString()
-      });
+      // console.log('🔔 收到实时事件数据:', {
+        // symbol: data.symbol,
+        // eventType: data.event_type,
+        // timestamp: new Date(data.timestamp).toISOString()
+      // });
 
       // 触发自定义事件，传递实时事件数据
       window.dispatchEvent(new CustomEvent('event_update', {
@@ -282,24 +282,24 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     // 连接质量监听
     socket.on('connect_error', (error: Error) => {
-      console.log('💥 连接错误:', error.message);
+      // console.log('💥 连接错误:', error.message);
       setConnectionStatus('error');
     });
 
     socket.on('reconnect', (attemptNumber: number) => {
-      console.log('🔄 重连成功, 尝试次数:', attemptNumber);
+      // console.log('🔄 重连成功, 尝试次数:', attemptNumber);
     });
 
     socket.on('reconnect_attempt', (attemptNumber: number) => {
-      console.log('🔄 尝试重连, 第', attemptNumber, '次');
+      // console.log('🔄 尝试重连, 第', attemptNumber, '次');
     });
 
     socket.on('reconnect_error', (error: Error) => {
-      console.log('💥 重连失败:', error.message);
+      // console.log('💥 重连失败:', error.message);
     });
 
     socket.on('reconnect_failed', () => {
-      console.log('💥 重连失败，已达到最大重试次数');
+      // console.log('💥 重连失败，已达到最大重试次数');
       setConnectionStatus('failed');
     });
 
@@ -316,7 +316,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       subscriptionsRef.current.set(key, subscriptionConfig);
 
       if (socket.connected) {
-        console.log('📤 订阅实时数据:', subscriptionConfig);
+        // console.log('📤 订阅实时数据:', subscriptionConfig);
         socket.emit('subscribe', subscriptionConfig);
       }
     }
@@ -328,7 +328,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const subscription = subscriptionsRef.current.get(key);
 
     if (subscription && socketRef.current) {
-      console.log('📤 取消订阅:', { symbol, interval });
+      // console.log('📤 取消订阅:', { symbol, interval });
       socketRef.current.emit('unsubscribe', { symbol, interval });
       subscriptionsRef.current.delete(key);
     }
@@ -339,7 +339,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const socket = connectSocket();
 
     if (socket.connected) {
-      console.log('📤 请求历史数据:', { symbol, interval, limit });
+      // console.log('📤 请求历史数据:', { symbol, interval, limit });
       socket.emit('history', { symbol, interval, limit });
     }
   }, [connectSocket]);
@@ -353,7 +353,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   // 清理连接
   const disconnect = useCallback((): void => {
     if (socketRef.current) {
-      console.log('👋 断开 WebSocket 连接');
+      // console.log('👋 断开 WebSocket 连接');
 
       // 取消所有订阅
       for (const [_key, subscription] of subscriptionsRef.current) {

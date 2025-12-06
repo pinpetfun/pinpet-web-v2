@@ -20,7 +20,7 @@ import Decimal from 'decimal.js';
 export const calculateLongProfitPercentage = (sdk, position) => {
   try {
     if (!sdk || !sdk.curve || !position) {
-      console.warn('[profitCalculator] Missing SDK, curve, or position data');
+      // console.warn('[profitCalculator] Missing SDK, curve, or position data');
       return null;
     }
 
@@ -36,19 +36,19 @@ export const calculateLongProfitPercentage = (sdk, position) => {
 
     // 验证必要数据
     if (!latest_price || !lock_lp_start_price || !lock_lp_token_amount || !margin_sol_amount || borrow_amount === undefined || !mint) {
-      console.warn('[profitCalculator] Missing required fields for Long calculation');
+      // console.warn('[profitCalculator] Missing required fields for Long calculation');
       return null;
     }
 
     // 打印原始数据以便调试
-    console.log('[profitCalculator] Long raw data:', {
-      latest_price,
-      lock_lp_start_price,
-      lock_lp_token_amount,
-      margin_sol_amount,
-      borrow_amount,
-      realized_sol_amount
-    });
+    // console.log('[profitCalculator] Long raw data:', {
+      // latest_price,
+      // lock_lp_start_price,
+      // lock_lp_token_amount,
+      // margin_sol_amount,
+      // borrow_amount,
+      // realized_sol_amount
+    // });
 
     try {
       // 使用 Decimal.js 进行高精度计算
@@ -64,36 +64,36 @@ export const calculateLongProfitPercentage = (sdk, position) => {
       const borrowSol = new Decimal(borrow_amount.toString());
       const realizedSol = realized_sol_amount ? new Decimal(realized_sol_amount.toString()) : new Decimal(0);
 
-      console.log('[profitCalculator] Long Decimal values:', {
-        price: price.toString(),
-        startPrice: startPrice.toString(),
-        tokenAmount: tokenAmount.toString(),
-        marginSol: marginSol.toString(),
-        borrowSol: borrowSol.toString(),
-        realizedSol: realizedSol.toString()
-      });
+      // console.log('[profitCalculator] Long Decimal values:', {
+        // price: price.toString(),
+        // startPrice: startPrice.toString(),
+        // tokenAmount: tokenAmount.toString(),
+        // marginSol: marginSol.toString(),
+        // borrowSol: borrowSol.toString(),
+        // realizedSol: realizedSol.toString()
+      // });
 
       // 数据有效性检查
       if (marginSol.lte(0) || tokenAmount.lte(0) || startPrice.lte(0)) {
-        console.warn('[profitCalculator] Invalid margin, token amount, or start price');
+        // console.warn('[profitCalculator] Invalid margin, token amount, or start price');
         return null;
       }
 
       // Long 仓位计算逻辑：
       // 1. 用 sdk.curve.sellFromPriceWithTokenInput(latest_price, lock_lp_token_amount) 得到: 平仓当前收入sol
-      console.log('[profitCalculator] Calling sdk.curve.sellFromPriceWithTokenInput with:', {
-        latest_price: latest_price,
-        lock_lp_token_amount: lock_lp_token_amount
-      });
+      // console.log('[profitCalculator] Calling sdk.curve.sellFromPriceWithTokenInput with:', {
+        // latest_price: latest_price,
+        // lock_lp_token_amount: lock_lp_token_amount
+      // });
       
       const sellResult = sdk.curve.sellFromPriceWithTokenInput(latest_price, lock_lp_token_amount);
       
       if (!sellResult) {
-        console.error('[profitCalculator] sdk.curve.sellFromPriceWithTokenInput returned null');
+        // console.error('[profitCalculator] sdk.curve.sellFromPriceWithTokenInput returned null');
         return null;
       }
 
-      console.log('[profitCalculator] sellFromPriceWithTokenInput result:', sellResult);
+      // console.log('[profitCalculator] sellFromPriceWithTokenInput result:', sellResult);
       
       // sellResult 可能是一个数组 [price, solAmount] 或者单个值
       let currentSellIncomeSol;
@@ -103,7 +103,7 @@ export const calculateLongProfitPercentage = (sdk, position) => {
         currentSellIncomeSol = new Decimal(sellResult.toString());
       }
 
-      console.log('[profitCalculator] Current sell income SOL:', currentSellIncomeSol.toString());
+      // console.log('[profitCalculator] Current sell income SOL:', currentSellIncomeSol.toString());
 
       // 2. 毛利收益sol  
       const grossProfitSol = currentSellIncomeSol.plus(marginSol).minus(borrowSol);
@@ -117,14 +117,14 @@ export const calculateLongProfitPercentage = (sdk, position) => {
       // 5. 计算止损位百分比: (latest_price - lock_lp_start_price) / lock_lp_start_price * 100
       const stopLossPercentage = price.minus(startPrice).div(startPrice).mul(100);
 
-      console.log('[profitCalculator] Long calculation steps:', {
-        currentSellIncomeSol: currentSellIncomeSol.toString(),
-        grossProfitSol: grossProfitSol.toString(),
-        netProfitSol: netProfitSol.toString(),
-        profitPercentage: profitPercentage.toString(),
-        stopLossPercentage: stopLossPercentage.toString(),
-        realizedSol: realizedSol.toString()
-      });
+      // console.log('[profitCalculator] Long calculation steps:', {
+        // currentSellIncomeSol: currentSellIncomeSol.toString(),
+        // grossProfitSol: grossProfitSol.toString(),
+        // netProfitSol: netProfitSol.toString(),
+        // profitPercentage: profitPercentage.toString(),
+        // stopLossPercentage: stopLossPercentage.toString(),
+        // realizedSol: realizedSol.toString()
+      // });
 
       // 返回4个值：毛利收益sol、净收益sol、盈亏百分比 和 止损位百分比, 已实现收益sol
       return {
@@ -136,12 +136,12 @@ export const calculateLongProfitPercentage = (sdk, position) => {
       };
 
     } catch (calculationError) {
-      console.error('[profitCalculator] Long calculation error:', calculationError);
+      // console.error('[profitCalculator] Long calculation error:', calculationError);
       return null;
     }
 
   } catch (error) {
-    console.error('[profitCalculator] Long profit calculation error:', error);
+    // console.error('[profitCalculator] Long profit calculation error:', error);
     return null;
   }
 };
@@ -159,7 +159,7 @@ export const calculateLongProfitPercentage = (sdk, position) => {
 export const calculateShortProfitPercentage = (sdk, position) => {
   try {
     if (!sdk || !sdk.curve || !position) {
-      console.warn('[profitCalculator] Missing SDK, curve, or position data');
+      // console.warn('[profitCalculator] Missing SDK, curve, or position data');
       return null;
     }
 
@@ -175,19 +175,19 @@ export const calculateShortProfitPercentage = (sdk, position) => {
 
     // 验证必要数据
     if (!latest_price || !lock_lp_start_price || !lock_lp_token_amount || !margin_sol_amount || !mint) {
-      console.warn('[profitCalculator] Missing required fields for Short calculation');
+      // console.warn('[profitCalculator] Missing required fields for Short calculation');
       return null;
     }
 
     // 打印原始数据以便调试
-    console.log('[profitCalculator] Short raw data:', {
-      latest_price,
-      lock_lp_start_price,
-      lock_lp_token_amount,
-      margin_sol_amount,
-      realized_sol_amount,
-      margin_init_sol_amount
-    });
+    // console.log('[profitCalculator] Short raw data:', {
+      // latest_price,
+      // lock_lp_start_price,
+      // lock_lp_token_amount,
+      // margin_sol_amount,
+      // realized_sol_amount,
+      // margin_init_sol_amount
+    // });
 
     try {
       // 使用 Decimal.js 进行高精度计算
@@ -203,58 +203,58 @@ export const calculateShortProfitPercentage = (sdk, position) => {
       const marginInitSol = new Decimal(margin_init_sol_amount.toString());
       const realizedSol = realized_sol_amount ? new Decimal(realized_sol_amount.toString()) : new Decimal(0);
 
-      console.log('[profitCalculator] Short Decimal values:', {
-        currentPrice: currentPrice.toString(),
-        startPrice: startPrice.toString(),
-        tokenAmount: tokenAmount.toString(),
-        marginSol: marginSol.toString(),
-        realizedSol: realizedSol.toString()
-      });
+      // console.log('[profitCalculator] Short Decimal values:', {
+        // currentPrice: currentPrice.toString(),
+        // startPrice: startPrice.toString(),
+        // tokenAmount: tokenAmount.toString(),
+        // marginSol: marginSol.toString(),
+        // realizedSol: realizedSol.toString()
+      // });
 
       // 数据有效性检查
       if (marginSol.lte(0) || tokenAmount.lte(0)) {
-        console.warn('[profitCalculator] Invalid margin or token amount for Short');
+        // console.warn('[profitCalculator] Invalid margin or token amount for Short');
         return null;
       }
 
       // Short 仓位计算逻辑：
       // 价格对比分析
-      console.log('[profitCalculator]1 Short price analysis:', {
-        开仓价格_lock_lp_start_price: startPrice.toString(),
-        当前价格_latest_price: currentPrice.toString(),
-        价格变化: startPrice.gt(currentPrice) ? '价格下跌（Short盈利）' : '价格上涨（Short亏损）',
-        价格差值: startPrice.minus(currentPrice).toString()
-      });
+      // console.log('[profitCalculator]1 Short price analysis:', {
+        // 开仓价格_lock_lp_start_price: startPrice.toString(),
+        // 当前价格_latest_price: currentPrice.toString(),
+        // 价格变化: startPrice.gt(currentPrice) ? '价格下跌（Short盈利）' : '价格上涨（Short亏损）',
+        // 价格差值: startPrice.minus(currentPrice).toString()
+      // });
       
       // 1. 用 sdk.curve.buyFromPriceWithTokenOutput(latest_price, lock_lp_token_amount) 得到: 平仓需要付出的sol
-      console.log('[profitCalculator] Calling sdk.curve.buyFromPriceWithTokenOutput for current price with:', {
-        latest_price: latest_price,
-        lock_lp_token_amount: lock_lp_token_amount
-      });
+      // console.log('[profitCalculator] Calling sdk.curve.buyFromPriceWithTokenOutput for current price with:', {
+        // latest_price: latest_price,
+        // lock_lp_token_amount: lock_lp_token_amount
+      // });
       
       const currentBuyResult = sdk.curve.buyFromPriceWithTokenOutput(latest_price, lock_lp_token_amount);
       
       if (!currentBuyResult) {
-        console.error('[profitCalculator] sdk.curve.buyFromPriceWithTokenOutput (current price) returned null');
+        // console.error('[profitCalculator] sdk.curve.buyFromPriceWithTokenOutput (current price) returned null');
         return null;
       }
 
-      console.log('[profitCalculator]1 A buyFromPriceWithTokenOutput (current price) result:', currentBuyResult);
+      // console.log('[profitCalculator]1 A buyFromPriceWithTokenOutput (current price) result:', currentBuyResult);
 
       // 2. 用 sdk.curve.buyFromPriceWithTokenOutput(lock_lp_start_price, lock_lp_token_amount) 得到: 解除锁定得到的sol
-      console.log('[profitCalculator] Calling sdk.curve.buyFromPriceWithTokenOutput for start price with:', {
-        lock_lp_start_price: lock_lp_start_price,
-        lock_lp_token_amount: lock_lp_token_amount
-      });
+      // console.log('[profitCalculator] Calling sdk.curve.buyFromPriceWithTokenOutput for start price with:', {
+        // lock_lp_start_price: lock_lp_start_price,
+        // lock_lp_token_amount: lock_lp_token_amount
+      // });
       
       const unlockBuyResult = sdk.curve.buyFromPriceWithTokenOutput(lock_lp_start_price, lock_lp_token_amount);
       
       if (!unlockBuyResult) {
-        console.error('[profitCalculator] sdk.curve.buyFromPriceWithTokenOutput (start price) returned null');
+        // console.error('[profitCalculator] sdk.curve.buyFromPriceWithTokenOutput (start price) returned null');
         return null;
       }
 
-      console.log('[profitCalculator]1 B buyFromPriceWithTokenOutput (start price) result:', unlockBuyResult);
+      // console.log('[profitCalculator]1 B buyFromPriceWithTokenOutput (start price) result:', unlockBuyResult);
       
       // 处理返回值格式 - 可能是数组 [price, solAmount] 或者单个值
       let currentBuyCostSol;
@@ -271,10 +271,10 @@ export const calculateShortProfitPercentage = (sdk, position) => {
         unlockSol = new Decimal(unlockBuyResult.toString());
       }
 
-      console.log('[profitCalculator] Processed SOL amounts:', {
-        currentBuyCostSol: currentBuyCostSol.toString(),
-        unlockSol: unlockSol.toString()
-      });
+      // console.log('[profitCalculator] Processed SOL amounts:', {
+        // currentBuyCostSol: currentBuyCostSol.toString(),
+        // unlockSol: unlockSol.toString()
+      // });
 
       // 3. 毛利收益sol 
       const grossProfitSol = unlockSol.minus(currentBuyCostSol);
@@ -289,14 +289,14 @@ export const calculateShortProfitPercentage = (sdk, position) => {
       // 6. 计算止损位百分比: (lock_lp_start_price - latest_price) / lock_lp_start_price * 100
       const stopLossPercentage = startPrice.minus(currentPrice).div(startPrice).mul(100);
 
-      console.log('[profitCalculator] Short calculation steps:', {
-        currentBuyCostSol: currentBuyCostSol.toString(),
-        unlockSol: unlockSol.toString(),
-        grossProfitSol: grossProfitSol.toString(),
-        netProfitSol: netProfitSol.toString(),
-        profitPercentage: profitPercentage.toString(),
-        stopLossPercentage: stopLossPercentage.toString()
-      });
+      // console.log('[profitCalculator] Short calculation steps:', {
+        // currentBuyCostSol: currentBuyCostSol.toString(),
+        // unlockSol: unlockSol.toString(),
+        // grossProfitSol: grossProfitSol.toString(),
+        // netProfitSol: netProfitSol.toString(),
+        // profitPercentage: profitPercentage.toString(),
+        // stopLossPercentage: stopLossPercentage.toString()
+      // });
 
       // 返回4个值：毛利收益sol、净收益sol、盈亏百分比 和 止损位百分比 , 已实现sol收益
       return {
@@ -308,12 +308,12 @@ export const calculateShortProfitPercentage = (sdk, position) => {
       };
 
     } catch (calculationError) {
-      console.error('[profitCalculator] Short calculation error:', calculationError);
+      // console.error('[profitCalculator] Short calculation error:', calculationError);
       return null;
     }
 
   } catch (error) {
-    console.error('[profitCalculator] Short profit calculation error:', error);
+    // console.error('[profitCalculator] Short profit calculation error:', error);
     return null;
   }
 };
@@ -339,11 +339,11 @@ export const calculatePositionProfitPercentage = (sdk, position) => {
       const shortResult = calculateShortProfitPercentage(sdk, position);
       return shortResult ? shortResult.profitPercentage : null;
     } else {
-      console.warn('[profitCalculator] Unknown order_type:', position.order_type);
+      // console.warn('[profitCalculator] Unknown order_type:', position.order_type);
       return null;
     }
   } catch (error) {
-    console.error('[profitCalculator] Position profit calculation error:', error);
+    // console.error('[profitCalculator] Position profit calculation error:', error);
     return null;
   }
 };
@@ -360,7 +360,7 @@ export const formatProfitPercentage = (percentage) => {
   
   // 检查是否是异常值
   if (Math.abs(percentage) > 10000) {
-    console.warn('[profitCalculator] Abnormal percentage value:', percentage);
+    // console.warn('[profitCalculator] Abnormal percentage value:', percentage);
     return '--';
   }
   

@@ -50,7 +50,7 @@ export const uploadToIPFS = async (file) => {
       }
     }
   } catch (error) {
-    console.error('IPFS upload error:', error)
+    // console.error('IPFS upload error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error)
@@ -135,7 +135,7 @@ export const uploadJSONToIPFS = async (jsonData) => {
       }
     }
   } catch (error) {
-    console.error('JSON IPFS upload error:', error)
+    // console.error('JSON IPFS upload error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error)

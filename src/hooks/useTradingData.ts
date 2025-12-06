@@ -146,7 +146,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 获取 SOL 余额
   const fetchSolBalance = useCallback(async (walletAddr: string): Promise<void> => {
     if (!walletAddr || !config.solana.rpcUrl) {
-      console.log('[TradingData] No wallet address or RPC URL for balance fetch');
+      // console.log('[TradingData] No wallet address or RPC URL for balance fetch');
       setSolBalance(0);
       return;
     }
@@ -155,7 +155,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       setBalanceLoading(true);
       setBalanceError(null);
 
-      console.log(`[TradingData] Fetching SOL balance for wallet: ${walletAddr}`);
+      // console.log(`[TradingData] Fetching SOL balance for wallet: ${walletAddr}`);
 
       const connection = new Connection(config.solana.rpcUrl, 'confirmed');
       const publicKey = new PublicKey(walletAddr);
@@ -164,11 +164,11 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       // 转换为 SOL（1 SOL = 10^9 lamports）
       const solAmount = balance / 1000000000;
 
-      console.log(`[TradingData] SOL balance: ${solAmount} SOL (${balance} lamports)`);
+      // console.log(`[TradingData] SOL balance: ${solAmount} SOL (${balance} lamports)`);
       setSolBalance(solAmount);
 
     } catch (err) {
-      console.error('获取 SOL 余额失败:', err);
+      // console.error('获取 SOL 余额失败:', err);
       setBalanceError(err as Error);
       setSolBalance(0);
     } finally {
@@ -179,7 +179,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 获取 Token 余额
   const fetchTokenBalance = useCallback(async (walletAddr: string, mintAddr: string): Promise<void> => {
     if (!walletAddr || !mintAddr || !config.solana.rpcUrl) {
-      console.log('[TradingData] No wallet address, mint address or RPC URL for token balance fetch');
+      // console.log('[TradingData] No wallet address, mint address or RPC URL for token balance fetch');
       setTokenBalance(0);
       return;
     }
@@ -188,7 +188,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       setTokenBalanceLoading(true);
       setTokenBalanceError(null);
 
-      console.log(`[TradingData] Fetching token balance for wallet: ${walletAddr}, mint: ${mintAddr}`);
+      // console.log(`[TradingData] Fetching token balance for wallet: ${walletAddr}, mint: ${mintAddr}`);
 
       const connection = new Connection(config.solana.rpcUrl, 'confirmed');
       const ownerPublicKey = new PublicKey(walletAddr);
@@ -201,7 +201,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       );
 
       if (tokenAccounts.value.length === 0) {
-        console.log(`[TradingData] No token accounts found for mint: ${mintAddr}`);
+        // console.log(`[TradingData] No token accounts found for mint: ${mintAddr}`);
         setTokenBalance(0);
         return;
       }
@@ -212,14 +212,14 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
         const accountData = account.account.data.parsed;
         const balance = accountData.info.tokenAmount.uiAmount || 0;
         totalBalance += balance;
-        console.log(`[TradingData] Token account ${account.pubkey.toString()}: ${balance}`);
+        // console.log(`[TradingData] Token account ${account.pubkey.toString()}: ${balance}`);
       }
 
-      console.log(`[TradingData] Total token balance: ${totalBalance}`);
+      // console.log(`[TradingData] Total token balance: ${totalBalance}`);
       setTokenBalance(totalBalance);
 
     } catch (err) {
-      console.error('获取 Token 余额失败:', err);
+      // console.error('获取 Token 余额失败:', err);
       setTokenBalanceError(err as Error);
       setTokenBalance(0);
     } finally {
@@ -230,13 +230,13 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 获取 Mint 信息
   const fetchMintInfo = useCallback(async (mintAddr: string): Promise<any> => {
     if (!mintAddr) {
-      console.log('[TradingData] No mint address for mint info fetch');
+      // console.log('[TradingData] No mint address for mint info fetch');
       setMintInfo(null);
       return Promise.resolve(null);
     }
 
     if (!sdk || !isReady) {
-      console.warn('[TradingData] SDK not ready, skipping mint info fetch');
+      // console.warn('[TradingData] SDK not ready, skipping mint info fetch');
       return null;
     }
 
@@ -244,23 +244,23 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       setMintInfoLoading(true);
       setMintInfoError(null);
 
-      console.log(`[TradingData] Fetching mint info for mint: ${mintAddr}`);
+      // console.log(`[TradingData] Fetching mint info for mint: ${mintAddr}`);
 
       // 使用 SDK 的 fast.mint_info() 方法
       const result = await sdk.fast.mint_info(mintAddr);
 
       if (result.code === 200 && result.data) {
-        console.log(`[TradingData] Mint info fetched successfully:`, result.data);
+        // console.log(`[TradingData] Mint info fetched successfully:`, result.data);
         setMintInfo(result.data);
         return result.data;
       } else {
-        console.warn(`[TradingData] No mint info found for: ${mintAddr}`);
+        // console.warn(`[TradingData] No mint info found for: ${mintAddr}`);
         setMintInfo(null);
         return null;
       }
 
     } catch (err) {
-      console.error('获取 mintInfo 失败:', err);
+      // console.error('获取 mintInfo 失败:', err);
       setMintInfoError(err as Error);
       setMintInfo(null);
       return Promise.reject(err);
@@ -273,7 +273,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   const shouldSkipRequest = useCallback((force: boolean = false, isUserAction: boolean = false): boolean => {
     // 如果是强制刷新，跳过所有检查
     if (force) {
-      console.log('[TradingData] Force refresh: skipping all limitations');
+      // console.log('[TradingData] Force refresh: skipping all limitations');
       return false;
     }
 
@@ -282,7 +282,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
     // 如果已被阻止，不发送请求
     if (isBlocked) {
-      console.log('[TradingData] Skipping request: blocked due to max retries');
+      // console.log('[TradingData] Skipping request: blocked due to max retries');
       return true;
     }
 
@@ -292,14 +292,14 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
     // 检查最小请求间隔（不管成功还是失败）
     if (lastRequestTime && now - lastRequestTime < effectiveMinInterval) {
       const waitTime = Math.ceil((effectiveMinInterval - (now - lastRequestTime)) / 1000);
-      console.log(`[TradingData] Skipping request: minimum interval (${isUserAction ? 'user' : 'auto'}) not reached, waiting ${waitTime}s`);
+      // console.log(`[TradingData] Skipping request: minimum interval (${isUserAction ? 'user' : 'auto'}) not reached, waiting ${waitTime}s`);
       return true;
     }
 
     // 如果刚发生错误且还没到重试时间，跳过请求
     if (lastErrorTime && now - lastErrorTime < retryDelay) {
       const waitTime = Math.ceil((retryDelay - (now - lastErrorTime)) / 1000);
-      console.log(`[TradingData] Skipping request: waiting ${waitTime}s before retry after error`);
+      // console.log(`[TradingData] Skipping request: waiting ${waitTime}s before retry after error`);
       return true;
     }
 
@@ -308,17 +308,17 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
   // 获取所有交易数据
   const fetchTradingData = useCallback(async (mint: string, force: boolean = false, isUserAction: boolean = false): Promise<void> => {
-    console.log('[TradingData] fetchTradingData called with:', {
-      mint,
-      force,
-      isUserAction,
-      isReady,
-      hasSdk: !!sdk,
-      shouldSkip: shouldSkipRequest(force, isUserAction)
-    });
+    // console.log('[TradingData] fetchTradingData called with:', {
+      // mint,
+      // force,
+      // isUserAction,
+      // isReady,
+      // hasSdk: !!sdk,
+      // shouldSkip: shouldSkipRequest(force, isUserAction)
+    // });
 
     if (!mint) {
-      console.log('[TradingData] No mint address provided');
+      // console.log('[TradingData] No mint address provided');
       setDownOrders11(null);
       setUpOrders11(null);
       setDownOrders1000(null);
@@ -329,7 +329,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
     }
 
     if (!isReady) {
-      console.log('[TradingData] SDK not ready');
+      // console.log('[TradingData] SDK not ready');
       setDownOrders11(null);
       setUpOrders11(null);
       setDownOrders1000(null);
@@ -340,7 +340,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
     }
 
     if (!sdk) {
-      console.log('[TradingData] SDK not available');
+      // console.log('[TradingData] SDK not available');
       setDownOrders11(null);
       setUpOrders11(null);
       setDownOrders1000(null);
@@ -351,13 +351,13 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
     }
 
     if (shouldSkipRequest(force, isUserAction)) {
-      console.log('[TradingData] Request skipped due to rate limiting');
+      // console.log('[TradingData] Request skipped due to rate limiting');
       return;
     }
 
     // 如果是强制刷新，重置错误状态
     if (force) {
-      console.log('[TradingData] Force refresh: resetting error state');
+      // console.log('[TradingData] Force refresh: resetting error state');
       retryState.current.count = 0;
       retryState.current.isBlocked = false;
       retryState.current.lastErrorTime = null;
@@ -373,7 +373,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
       // 记录请求开始时间
       retryState.current.lastRequestTime = Date.now();
 
-      console.log(`[TradingData] Fetching data for mint: ${mint}, retry count: ${retryState.current.count}, force: ${force}, userAction: ${isUserAction}`);
+      // console.log(`[TradingData] Fetching data for mint: ${mint}, retry count: ${retryState.current.count}, force: ${force}, userAction: ${isUserAction}`);
 
       // 并发请求所有数据
       const [downOrdersResult, upOrdersResult, priceResult, mintInfoResult] = await Promise.allSettled([
@@ -395,7 +395,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
       // 处理 down_orders 结果
       if (downOrdersResult.status === 'fulfilled') {
-        console.log('[TradingData] downOrdersResult:', downOrdersResult.value);
+        // console.log('[TradingData] downOrdersResult:', downOrdersResult.value);
         const fullData = downOrdersResult.value;
         setDownOrders1000(fullData); // 全部1000个数据
         
@@ -407,12 +407,12 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
           setDownOrders11(fullData);
         }
       } else {
-        console.error('获取 down_orders 失败:', downOrdersResult.reason);
+        // console.error('获取 down_orders 失败:', downOrdersResult.reason);
       }
 
       // 处理 up_orders 结果
       if (upOrdersResult.status === 'fulfilled') {
-        console.log('[TradingData] upOrdersResult:', upOrdersResult.value);
+        // console.log('[TradingData] upOrdersResult:', upOrdersResult.value);
         const fullData = upOrdersResult.value;
         setUpOrders1000(fullData); // 全部1000个数据
         
@@ -424,23 +424,23 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
           setUpOrders11(fullData);
         }
       } else {
-        console.error('获取 up_orders 失败:', upOrdersResult.reason);
+        // console.error('获取 up_orders 失败:', upOrdersResult.reason);
       }
 
       // 处理价格结果
       if (priceResult.status === 'fulfilled') {
-        console.log('[TradingData] priceResult:', priceResult.value);
+        // console.log('[TradingData] priceResult:', priceResult.value);
         setLastPrice(priceResult.value);
       } else {
-        console.error('获取价格失败:', priceResult.reason);
+        // console.error('获取价格失败:', priceResult.reason);
       }
 
       // 处理 mintInfo 结果
       if (mintInfoResult.status === 'fulfilled') {
-        console.log('[TradingData] mintInfoResult:', mintInfoResult.value);
+        // console.log('[TradingData] mintInfoResult:', mintInfoResult.value);
         // mintInfo 已经在 fetchMintInfo 中设置了，这里不需要重复设置
       } else {
-        console.error('获取 mintInfo 失败:', mintInfoResult.reason);
+        // console.error('获取 mintInfo 失败:', mintInfoResult.reason);
       }
 
       // 检查是否有任何请求失败
@@ -462,10 +462,10 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
         if (retryState.current.count >= maxRetries) {
           retryState.current.isBlocked = true;
           setUiIsBlocked(true);
-          console.error(`[TradingData] Max retries (${maxRetries}) reached. Stopping requests.`);
+          // console.error(`[TradingData] Max retries (${maxRetries}) reached. Stopping requests.`);
           newError.message = `Max retries reached. Requests stopped after ${maxRetries} failures.`;
         } else {
-          console.warn(`[TradingData] Request failed (${retryState.current.count}/${maxRetries}). Will retry in ${retryDelay/1000}s`);
+          // console.warn(`[TradingData] Request failed (${retryState.current.count}/${maxRetries}). Will retry in ${retryDelay/1000}s`);
         }
 
         setError(newError);
@@ -479,11 +479,11 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
         setUiRetryCount(0);
         setUiIsBlocked(false);
         setLastUpdated(new Date());
-        console.log(`[TradingData] Data fetched successfully`);
+        // console.log(`[TradingData] Data fetched successfully`);
       }
 
     } catch (err) {
-      console.error('获取交易数据失败:', err);
+      // console.error('获取交易数据失败:', err);
 
       // 增加重试计数
       retryState.current.count += 1;
@@ -496,7 +496,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
         retryState.current.isBlocked = true;
         setUiIsBlocked(true);
         (err as Error).message = `Max retries reached. Requests stopped after ${maxRetries} failures.`;
-        console.error(`[TradingData] Max retries (${maxRetries}) reached. Stopping requests.`);
+        // console.error(`[TradingData] Max retries (${maxRetries}) reached. Stopping requests.`);
       }
 
       setError(err as Error);
@@ -515,7 +515,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 强制刷新数据（跳过所有限制）
   const forceRefresh = useCallback((): void => {
     if (mintAddress) {
-      console.log('[TradingData] Force refresh triggered for mint:', mintAddress);
+      // console.log('[TradingData] Force refresh triggered for mint:', mintAddress);
       fetchTradingData(mintAddress, true, false);
     }
   }, [mintAddress, fetchTradingData]);
@@ -523,13 +523,13 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 强制刷新数据和余额（交易后使用）
   const forceRefreshWithBalance = useCallback((): void => {
     if (mintAddress) {
-      console.log('[TradingData] Force refresh with balance triggered for mint:', mintAddress);
+      // console.log('[TradingData] Force refresh with balance triggered for mint:', mintAddress);
       // 强制刷新交易数据
       fetchTradingData(mintAddress, true, false);
 
       // 强制刷新余额数据
       if (connected && walletAddress) {
-        console.log('[TradingData] Force refreshing balances for wallet:', walletAddress);
+        // console.log('[TradingData] Force refreshing balances for wallet:', walletAddress);
         fetchSolBalance(walletAddress);
         fetchTokenBalance(walletAddress, mintAddress);
       }
@@ -539,7 +539,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 用户操作触发的快速刷新（400ms间隔）
   const userActionRefresh = useCallback((): void => {
     if (mintAddress) {
-      console.log('[TradingData] User action refresh triggered for mint:', mintAddress);
+      // console.log('[TradingData] User action refresh triggered for mint:', mintAddress);
       fetchTradingData(mintAddress, false, true); // 不强制，但标记为用户操作
 
       // 同时刷新余额
@@ -571,7 +571,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
   // 监听 mintAddress 变化
   useEffect(() => {
     // 如果mintAddress改变了，重置状态但仍要遵守间隔
-    console.log('[TradingData] useEffect triggered with mintAddress:', mintAddress);
+    // console.log('[TradingData] useEffect triggered with mintAddress:', mintAddress);
     if (mintAddress) {
       fetchTradingData(mintAddress, false); // 正常刷新不强制
     }
@@ -579,7 +579,7 @@ export const useTradingData = (mintAddress?: string, options: TradingDataOptions
 
   // 监听钱包地址变化，获取 SOL 余额和 Token 余额
   useEffect(() => {
-    console.log('[TradingData] Wallet state changed:', { walletAddress, connected, mintAddress });
+    // console.log('[TradingData] Wallet state changed:', { walletAddress, connected, mintAddress });
     if (connected && walletAddress) {
       fetchSolBalance(walletAddress);
       if (mintAddress) {

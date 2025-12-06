@@ -76,7 +76,7 @@ const SdkTestComponent = () => {
       setTesting(true);
       
       // 测试获取代币列表
-      console.log('测试获取代币列表...');
+      // console.log('测试获取代币列表...');
       const mintsResult = await getMints({ limit: 5 });
       
       let mintInfoResult = null;
@@ -86,10 +86,10 @@ const SdkTestComponent = () => {
       if (mintsResult?.data?.mints?.length > 0) {
         const firstMint = mintsResult.data.mints[0];
         
-        console.log('测试获取代币详情...', firstMint);
+        // console.log('测试获取代币详情...', firstMint);
         mintInfoResult = await getMintInfo(firstMint);
         
-        console.log('测试获取代币价格...', firstMint);
+        // console.log('测试获取代币价格...', firstMint);
         priceResult = await getPrice(firstMint);
       }
 
@@ -101,7 +101,7 @@ const SdkTestComponent = () => {
       };
 
     } catch (err) {
-      console.error('数据测试失败:', err);
+      // console.error('数据测试失败:', err);
       return {
         success: false,
         error: err.message
@@ -113,15 +113,15 @@ const SdkTestComponent = () => {
 
   // 运行所有测试
   const runTests = async () => {
-    console.log('开始运行 SDK 测试...');
+    // console.log('开始运行 SDK 测试...');
     
     const statusTest = testSdkStatus();
-    console.log('SDK 状态测试:', statusTest);
+    // console.log('SDK 状态测试:', statusTest);
     
     let dataTest = null;
     if (statusTest.isReady) {
       dataTest = await testDataFunctions();
-      console.log('数据功能测试:', dataTest);
+      // console.log('数据功能测试:', dataTest);
     }
 
     setTestResults({

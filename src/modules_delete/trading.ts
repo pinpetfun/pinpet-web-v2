@@ -589,8 +589,8 @@ class TradingModule {
     const prevOrder = prevNext.prevOrder ? new PublicKey(prevNext.prevOrder.order_pda) : null;
     const nextOrder = prevNext.nextOrder ? new PublicKey(prevNext.nextOrder.order_pda) : null;
 
-    console.log(`closeLong: 找到前一个订单 Found previous order: ${prevOrder ? prevOrder.toString() : 'null'}`);
-    console.log(`closeLong: 找到后一个订单 Found next order: ${nextOrder ? nextOrder.toString() : 'null'}`);
+    // console.log(`closeLong: 找到前一个订单 Found previous order: ${prevOrder ? prevOrder.toString() : 'null'}`);
+    // console.log(`closeLong: 找到后一个订单 Found next order: ${nextOrder ? nextOrder.toString() : 'null'}`);
 
     // 4. 计算 PDA 账户 / Calculate PDA accounts
     const accounts = this._calculatePDAAccounts(mint);
@@ -718,8 +718,8 @@ class TradingModule {
     const prevOrder = prevNext.prevOrder ? new PublicKey(prevNext.prevOrder.order_pda) : null;
     const nextOrder = prevNext.nextOrder ? new PublicKey(prevNext.nextOrder.order_pda) : null;
 
-    console.log(`closeShort: 找到前一个订单 Found previous order: ${prevOrder ? prevOrder.toString() : 'null'}`);
-    console.log(`closeShort: 找到后一个订单 Found next order: ${nextOrder ? nextOrder.toString() : 'null'}`);
+    // console.log(`closeShort: 找到前一个订单 Found previous order: ${prevOrder ? prevOrder.toString() : 'null'}`);
+    // console.log(`closeShort: 找到后一个订单 Found next order: ${nextOrder ? nextOrder.toString() : 'null'}`);
 
     // 4. 计算 PDA 账户 Calculate PDA accounts
     const accounts = this._calculatePDAAccounts(mint);

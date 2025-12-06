@@ -78,12 +78,12 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
       };
 
       localStorage.setItem('pinpet_wallet_connection', JSON.stringify(walletData));
-      console.log('钱包连接成功:', walletData);
+      // console.log('钱包连接成功:', walletData);
       setIsAutoConnecting(false);
     } else if (!connected && !connecting) {
       // 钱包断开，清除连接状态
       localStorage.removeItem('pinpet_wallet_connection');
-      console.log('钱包已断开连接');
+      // console.log('钱包已断开连接');
       setIsAutoConnecting(false);
     }
   }, [connected, publicKey, wallet, connecting]);
@@ -96,11 +96,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
         try {
           const connectionData: WalletConnectionData = JSON.parse(savedConnection);
           if (connectionData.autoConnect) {
-            console.log('检测到之前的钱包连接，准备自动连接');
+            // console.log('检测到之前的钱包连接，准备自动连接');
             // wallet adapter 的 autoConnect 会自动处理重连
           }
         } catch (error) {
-          console.error('恢复连接状态失败:', error);
+          // console.error('恢复连接状态失败:', error);
           localStorage.removeItem('pinpet_wallet_connection');
         }
       }
@@ -117,9 +117,9 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     try {
       await disconnect();
       localStorage.removeItem('pinpet_wallet_connection');
-      console.log('用户手动登出');
+      // console.log('用户手动登出');
     } catch (error) {
-      console.error('登出失败:', error);
+      // console.error('登出失败:', error);
     }
   };
 
@@ -128,10 +128,10 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     if (publicKey) {
       try {
         await navigator.clipboard.writeText(publicKey.toString());
-        console.log('地址已复制到剪贴板');
+        // console.log('地址已复制到剪贴板');
         return true;
       } catch (error) {
-        console.error('复制地址失败:', error);
+        // console.error('复制地址失败:', error);
         return false;
       }
     }

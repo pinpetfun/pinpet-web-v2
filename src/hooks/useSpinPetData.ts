@@ -19,7 +19,7 @@ export const useSpinPetData = () => {
       const result = await requestFn();
       return result;
     } catch (err) {
-      console.error('SpinPetData 请求失败:', err);
+      // console.error('SpinPetData 请求失败:', err);
       setError(err);
       throw err;
     } finally {

@@ -72,14 +72,14 @@ const TradingPanel = React.memo(({
     }
 
     inputDebounceTimerRef.current = setTimeout(() => {
-      console.log('[TradingPanel] User input stopped for 400ms, refreshing...');
+      // console.log('[TradingPanel] User input stopped for 400ms, refreshing...');
       userActionRefresh(); // 使用用户操作刷新（400ms间隔）
     }, 400);
   }, [userActionRefresh]);
 
   // 快捷操作立即刷新
   const handleQuickActionRefresh = React.useCallback(() => {
-    console.log('[TradingPanel] Quick action triggered, refreshing immediately...');
+    // console.log('[TradingPanel] Quick action triggered, refreshing immediately...');
     userActionRefresh(); // 使用用户操作刷新（400ms间隔）
   }, [userActionRefresh]);
 
@@ -111,7 +111,7 @@ const TradingPanel = React.memo(({
   // Handle trading action
   const handleTrade = async (amount, type) => {
     try {
-      console.log(`[TradingPanel] Trade initiated: ${type} ${amount}`);
+      // console.log(`[TradingPanel] Trade initiated: ${type} ${amount}`);
 
       // 调用原始的交易回调
       if (onTrade) {
@@ -119,32 +119,32 @@ const TradingPanel = React.memo(({
 
         // 如果 onTrade 返回 Promise，等待它完成
         if (result && typeof result === 'object' && 'then' in result && typeof result.then === 'function') {
-          console.log('[TradingPanel] Waiting for trade to complete...');
+          // console.log('[TradingPanel] Waiting for trade to complete...');
           await result;
-          console.log('[TradingPanel] Trade completed successfully');
+          // console.log('[TradingPanel] Trade completed successfully');
         } else {
-          console.log('[TradingPanel] Trade callback returned immediately');
+          // console.log('[TradingPanel] Trade callback returned immediately');
           // 如果没有返回 Promise，延迟一小段时间再刷新
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
       // 交易完成后强制刷新数据和余额
-      console.log('[TradingPanel] Force refreshing data after trade');
+      // console.log('[TradingPanel] Force refreshing data after trade');
       forceRefreshWithBalance();
 
     } catch (error) {
-      console.error('[TradingPanel] Trade failed:', error);
+      // console.error('[TradingPanel] Trade failed:', error);
 
       // 即使交易失败，也要刷新数据（可能部分操作已经执行）
-      console.log('[TradingPanel] Force refreshing data after trade failure');
+      // console.log('[TradingPanel] Force refreshing data after trade failure');
       forceRefreshWithBalance();
     }
   };
 
   // 监听模式切换，智能刷新数据
   React.useEffect(() => {
-    console.log(`[TradingPanel] Mode changed to: ${activeMode}`);
+    // console.log(`[TradingPanel] Mode changed to: ${activeMode}`);
 
     // 检查是否需要不同的数据
     const needsDifferentData = (
@@ -153,7 +153,7 @@ const TradingPanel = React.memo(({
     ) || !hasData; // 或者完全没有数据
 
     if (needsDifferentData) {
-      console.log('[TradingPanel] Mode requires different data, refreshing...');
+      // console.log('[TradingPanel] Mode requires different data, refreshing...');
       userActionRefresh(); // 使用用户操作刷新
     }
   }, [activeMode, downOrders1000, upOrders1000, hasData, userActionRefresh]);
@@ -299,13 +299,13 @@ const TradingPanel = React.memo(({
       )}
       {activeMode === 'long' && (
         <>
-          {console.log('[TradingPanel] Rendering LongPanel with data:', {
+          {/* console.log('[TradingPanel] Rendering LongPanel with data:', {
             mintAddress,
             hasDownOrders1000: !!downOrders1000,
             hasLastPrice: !!lastPrice,
             lastPrice,
             downOrders1000
-          })}
+          }) */}
           <LongPanel
             tokenSymbol={dynamicTokenSymbol}
             solBalance={safeSolBalance}

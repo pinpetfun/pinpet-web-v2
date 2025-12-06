@@ -11,9 +11,9 @@ import { getEmojiImage } from '../../config/emojiConfig';
 
 const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, onRefresh }) => {
   // 🔍 调试：打印完整的 position 对象
-  console.log('[PartialCloseDialog] 🔍 完整 position 对象:', position);
-  console.log('[PartialCloseDialog] 🔍 position.order_id:', position?.order_id);
-  console.log('[PartialCloseDialog] 🔍 position 所有键:', Object.keys(position || {}));
+  // console.log('[PartialCloseDialog] 🔍 完整 position 对象:', position);
+  // console.log('[PartialCloseDialog] 🔍 position.order_id:', position?.order_id);
+  // console.log('[PartialCloseDialog] 🔍 position 所有键:', Object.keys(position || {}));
 
   // SDK 和钱包 hooks
   const { sdk, isReady } = usePinPetSdk();
@@ -125,7 +125,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       
       return estimatedSol.toFixed(9);
     } catch (error) {
-      console.error('Error calculating estimated receive:', error);
+      // console.error('Error calculating estimated receive:', error);
       return '0.000000000';
     }
   };
@@ -227,36 +227,36 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
 
     try {
       setIsProcessing(true);
-      console.log('[PartialCloseDialog] Starting partial close process...', {
-        orderType: order_type,
-        direction,
-        mint,
-        orderId: order_id,
-        partialAmount: amount,
-        lockLpTokenAmount: lock_lp_token_amount,
-        lockLpSolAmount: lock_lp_sol_amount
-      });
+      // console.log('[PartialCloseDialog] Starting partial close process...', {
+        // orderType: order_type,
+        // direction,
+        // mint,
+        // orderId: order_id,
+        // partialAmount: amount,
+        // lockLpTokenAmount: lock_lp_token_amount,
+        // lockLpSolAmount: lock_lp_sol_amount
+      // });
 
       // Convert 6 decimal display amount to raw integer amount
       const rawTokenAmount = Math.floor(amount * 1000000);
-      console.log('[PartialCloseDialog] Precision conversion:', {
-        displayAmount: amount,
-        rawAmount: rawTokenAmount
-      });
+      // console.log('[PartialCloseDialog] Precision conversion:', {
+        // displayAmount: amount,
+        // rawAmount: rawTokenAmount
+      // });
 
       let result;
       let closeOrderIndices;
 
       if (order_type === 1) { // Long partial close
-        console.log('[PartialCloseDialog] Executing Long partial close...');
+        // console.log('[PartialCloseDialog] Executing Long partial close...');
 
         // 使用模拟器获取平仓候选索引
         try {
           const closeIndicesResult = await sdk.simulator.simulateLongClose(mint, order_id);
           closeOrderIndices = closeIndicesResult.closeOrderIndices;
-          console.log('[PartialCloseDialog] 做多平仓候选索引:', closeOrderIndices);
+          // console.log('[PartialCloseDialog] 做多平仓候选索引:', closeOrderIndices);
         } catch (error) {
-          console.error('[PartialCloseDialog] 生成做多平仓索引失败:', error);
+          // console.error('[PartialCloseDialog] 生成做多平仓索引失败:', error);
           showToast('error', 'Failed to generate close indices');
           return;
         }
@@ -271,15 +271,15 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
           userSolAccount: user || walletAddress  // 使用订单创建者地址或当前钱包地址
         });
       } else { // Short partial close
-        console.log('[PartialCloseDialog] Executing Short partial close...');
+        // console.log('[PartialCloseDialog] Executing Short partial close...');
 
         // 使用模拟器获取平仓候选索引
         try {
           const closeIndicesResult = await sdk.simulator.simulateShortClose(mint, order_id);
           closeOrderIndices = closeIndicesResult.closeOrderIndices;
-          console.log('[PartialCloseDialog] 做空平仓候选索引:', closeOrderIndices);
+          // console.log('[PartialCloseDialog] 做空平仓候选索引:', closeOrderIndices);
         } catch (error) {
-          console.error('[PartialCloseDialog] 生成做空平仓索引失败:', error);
+          // console.error('[PartialCloseDialog] 生成做空平仓索引失败:', error);
           showToast('error', 'Failed to generate close indices');
           return;
         }
@@ -295,32 +295,32 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
         });
       }
 
-      console.log('[PartialCloseDialog] SDK returned result:', result);
+      // console.log('[PartialCloseDialog] SDK returned result:', result);
 
       // Get latest blockhash
-      console.log('[PartialCloseDialog] Getting latest blockhash...');
+      // console.log('[PartialCloseDialog] Getting latest blockhash...');
       const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
       result.transaction.feePayer = new PublicKey(walletAddress);
 
-      console.log('[PartialCloseDialog] Updated blockhash:', blockhash);
+      // console.log('[PartialCloseDialog] Updated blockhash:', blockhash);
 
       // Wallet signing
-      console.log('[PartialCloseDialog] Requesting wallet signature...');
+      // console.log('[PartialCloseDialog] Requesting wallet signature...');
       const signedTransaction = await signTransaction(result.transaction);
 
-      console.log('[PartialCloseDialog] Wallet signature completed');
+      // console.log('[PartialCloseDialog] Wallet signature completed');
 
       // Send transaction
-      console.log('[PartialCloseDialog] Sending transaction...');
+      // console.log('[PartialCloseDialog] Sending transaction...');
       const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-      console.log('[PartialCloseDialog] Waiting for transaction confirmation...');
+      // console.log('[PartialCloseDialog] Waiting for transaction confirmation...');
       await connection.confirmTransaction(signature, 'confirmed');
 
-      console.log('[PartialCloseDialog] ✅ Partial close successful!');
-      console.log('[PartialCloseDialog] Transaction signature:', signature);
+      // console.log('[PartialCloseDialog] ✅ Partial close successful!');
+      // console.log('[PartialCloseDialog] Transaction signature:', signature);
 
       // Show success toast
       showToast('success', `Successfully partially closed ${direction} position`, signature);
@@ -345,7 +345,7 @@ const PartialCloseDialog = ({ isOpen, onClose, position, onConfirmPartialClose, 
       // They can click X button, click outside, or press ESC to close
 
     } catch (error) {
-      console.error('[PartialCloseDialog] Partial close failed:', error);
+      // console.error('[PartialCloseDialog] Partial close failed:', error);
 
       let errorMessage = error.message;
       if (error.message.includes('User rejected')) {

@@ -21,7 +21,7 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
 
         // 获取 mintInfo / Get mintInfo
         if (!mintInfo) {
-            console.log('获取代币信息中... / Getting token info...');
+            // console.log('获取代币信息中... / Getting token info...');
             mintInfo = await this.sdk.fast.mint_info(mint);
             if (!mintInfo || !mintInfo.success) {
                 throw new Error('获取代币信息失败 / Failed to get token info');
@@ -30,7 +30,7 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
 
         // 获取 ordersData / Get ordersData
         if (!ordersData) {
-            console.log('获取订单数据中... / Getting orders data...');
+            // console.log('获取订单数据中... / Getting orders data...');
             ordersData = await this.sdk.data.orders(mint, { type: 'down_orders' });
             if (!ordersData || !ordersData.success) {
                 throw new Error('获取订单数据失败 / Failed to get orders data');
@@ -40,19 +40,19 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
         // 计算当前价格 / Calculate current price
         let currentPrice;
         if (mintInfo.data.details[0].latest_price === null || mintInfo.data.details[0].latest_price === undefined) {
-            console.log('当前价格为空，使用初始价格 / Current price is empty, using initial price');
+            // console.log('当前价格为空，使用初始价格 / Current price is empty, using initial price');
             currentPrice = CurveAMM.getInitialPrice();
         } else {
             currentPrice = BigInt(mintInfo.data.details[0].latest_price);
             if (!currentPrice || currentPrice === 0n) {
-                console.log('当前价格为0，使用初始价格 / Current price is 0, using initial price');
+                // console.log('当前价格为0，使用初始价格 / Current price is 0, using initial price');
                 currentPrice = CurveAMM.getInitialPrice();
             }
         }
 
         // 转换订单数据 / Transform orders data
         const downOrders = transformOrdersData(ordersData);
-        console.log(`找到 ${downOrders.length} 个已存在的做多订单 / Found ${downOrders.length} existing long orders`);
+        // console.log(`找到 ${downOrders.length} 个已存在的做多订单 / Found ${downOrders.length} existing long orders`);
 
         // 初始化止损价格 / Initialize stop loss prices
         let stopLossStartPrice = BigInt(stopLossPrice);
@@ -84,7 +84,7 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
             const overlapResult = checkPriceRangeOverlap('down_orders', downOrders, stopLossStartPrice, stopLossEndPrice);
             
             if (overlapResult.no_overlap) {
-                console.log('价格区间无重叠，可以执行 / No price range overlap, can execute');
+                // console.log('价格区间无重叠，可以执行 / No price range overlap, can execute');
                 finalOverlapResult = overlapResult; // 记录最终的overlap结果 / Record final overlap result
                 finalTradeAmount = tradeAmount; // 记录最终的交易金额 / Record final trade amount
                 break;
@@ -121,13 +121,13 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
             leverage = Number((BigInt(10000) * currentPrice) / (currentPrice - executableStopLossPrice)) / 10000;
         }
 
-        console.log(`计算完成 / Calculation completed:`);
-        console.log(`  可执行止损价格: ${executableStopLossPrice} / Executable stop loss price: ${executableStopLossPrice}`);
-        console.log(`  SOL输出量: ${finalTradeAmount} / SOL output amount: ${finalTradeAmount}`);
-        console.log(`  止损百分比: ${stopLossPercentage}% / Stop loss percentage: ${stopLossPercentage}%`);
-        console.log(`  杠杆比例: ${leverage}x / Leverage: ${leverage}x`);
-        console.log(`  前一个订单PDA: ${finalOverlapResult.prev_order_pda} / Previous order PDA: ${finalOverlapResult.prev_order_pda}`);
-        console.log(`  下一个订单PDA: ${finalOverlapResult.next_order_pda} / Next order PDA: ${finalOverlapResult.next_order_pda}`);
+        // console.log(`计算完成 / Calculation completed:`);
+        // console.log(`  可执行止损价格: ${executableStopLossPrice} / Executable stop loss price: ${executableStopLossPrice}`);
+        // console.log(`  SOL输出量: ${finalTradeAmount} / SOL output amount: ${finalTradeAmount}`);
+        // console.log(`  止损百分比: ${stopLossPercentage}% / Stop loss percentage: ${stopLossPercentage}%`);
+        // console.log(`  杠杆比例: ${leverage}x / Leverage: ${leverage}x`);
+        // console.log(`  前一个订单PDA: ${finalOverlapResult.prev_order_pda} / Previous order PDA: ${finalOverlapResult.prev_order_pda}`);
+        // console.log(`  下一个订单PDA: ${finalOverlapResult.next_order_pda} / Next order PDA: ${finalOverlapResult.next_order_pda}`);
 
         return {
             executableStopLossPrice: executableStopLossPrice, // 计算后给出合理的止损值 / Calculated reasonable stop loss value
@@ -142,7 +142,7 @@ async function simulateLongStopLoss(mint, buyTokenAmount, stopLossPrice, mintInf
         };
 
     } catch (error) {
-        console.error('模拟计算止损位失败 / Failed to simulate stop loss calculation:', error.message);
+        // console.error('模拟计算止损位失败 / Failed to simulate stop loss calculation:', error.message);
         throw error;
     }
 }
@@ -166,7 +166,7 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
 
         // 获取 mintInfo / Get mintInfo
         if (!mintInfo) {
-            console.log('获取代币信息中... / Getting token info...');
+            // console.log('获取代币信息中... / Getting token info...');
             mintInfo = await this.sdk.fast.mint_info(mint);
             if (!mintInfo || !mintInfo.success) {
                 throw new Error('获取代币信息失败 / Failed to get token info');
@@ -175,7 +175,7 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
 
         // 获取 ordersData / Get ordersData
         if (!ordersData) {
-            console.log('获取订单数据中... / Getting orders data...');
+            // console.log('获取订单数据中... / Getting orders data...');
             ordersData = await this.sdk.data.orders(mint, { type: 'up_orders' });
             if (!ordersData || !ordersData.success) {
                 throw new Error('获取订单数据失败 / Failed to get orders data');
@@ -185,13 +185,13 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
         // 计算当前价格 / Calculate current price
         let currentPrice = BigInt(mintInfo.data.details[0].latest_price);
         if (!currentPrice || currentPrice === 0n) {
-            console.log('当前价格为空，使用初始价格 / Current price is empty, using initial price');
+            // console.log('当前价格为空，使用初始价格 / Current price is empty, using initial price');
             currentPrice = CurveAMM.getInitialPrice();
         }
 
         // 转换订单数据 / Transform orders data
         const upOrders = transformOrdersData(ordersData);
-        console.log(`找到 ${upOrders.length} 个已存在的做空订单 / Found ${upOrders.length} existing short orders`);
+        // console.log(`找到 ${upOrders.length} 个已存在的做空订单 / Found ${upOrders.length} existing short orders`);
 
         // 初始化止损价格 / Initialize stop loss prices
         let stopLossStartPrice = BigInt(stopLossPrice);
@@ -201,7 +201,7 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
         let finalOverlapResult = null; // 记录最终的overlap结果 / Record final overlap result
         let finalTradeAmount = 0n; // 记录最终的交易金额 / Record final trade amount
 
-        console.log(`开始价格: ${stopLossStartPrice}, 目标Token数量: ${sellTokenAmount} / Start price: ${stopLossStartPrice}, Target token amount: ${sellTokenAmount}`);
+        // console.log(`开始价格: ${stopLossStartPrice}, 目标Token数量: ${sellTokenAmount} / Start price: ${stopLossStartPrice}, Target token amount: ${sellTokenAmount}`);
 
         // 循环调整止损价格直到无重叠 / Loop to adjust stop loss price until no overlap
         while (iteration < maxIterations) {
@@ -222,7 +222,7 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
             const overlapResult = checkPriceRangeOverlap('up_orders', upOrders, stopLossStartPrice, stopLossEndPrice);
             
             if (overlapResult.no_overlap) {
-                console.log('价格区间无重叠，可以执行 / No price range overlap, can execute');
+                // console.log('价格区间无重叠，可以执行 / No price range overlap, can execute');
                 finalOverlapResult = overlapResult; // 记录最终的overlap结果 / Record final overlap result
                 finalTradeAmount = tradeAmount; // 记录最终的交易金额 / Record final trade amount
                 break;
@@ -258,13 +258,13 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
         // 做空时，杠杆 = 当前价格 / (止损价格 - 当前价格)
         const leverage = Number((BigInt(10000) * currentPrice) / (executableStopLossPrice - currentPrice)) / 10000;
 
-        console.log(`计算完成 / Calculation completed:`);
-        console.log(`  可执行止损价格: ${executableStopLossPrice} / Executable stop loss price: ${executableStopLossPrice}`);
-        console.log(`  SOL输入量: ${finalTradeAmount} / SOL input amount: ${finalTradeAmount}`);
-        console.log(`  止损百分比: ${stopLossPercentage}% / Stop loss percentage: ${stopLossPercentage}%`);
-        console.log(`  杠杆比例: ${leverage}x / Leverage: ${leverage}x`);
-        console.log(`  前一个订单PDA: ${finalOverlapResult.prev_order_pda} / Previous order PDA: ${finalOverlapResult.prev_order_pda}`);
-        console.log(`  下一个订单PDA: ${finalOverlapResult.next_order_pda} / Next order PDA: ${finalOverlapResult.next_order_pda}`);
+        // console.log(`计算完成 / Calculation completed:`);
+        // console.log(`  可执行止损价格: ${executableStopLossPrice} / Executable stop loss price: ${executableStopLossPrice}`);
+        // console.log(`  SOL输入量: ${finalTradeAmount} / SOL input amount: ${finalTradeAmount}`);
+        // console.log(`  止损百分比: ${stopLossPercentage}% / Stop loss percentage: ${stopLossPercentage}%`);
+        // console.log(`  杠杆比例: ${leverage}x / Leverage: ${leverage}x`);
+        // console.log(`  前一个订单PDA: ${finalOverlapResult.prev_order_pda} / Previous order PDA: ${finalOverlapResult.prev_order_pda}`);
+        // console.log(`  下一个订单PDA: ${finalOverlapResult.next_order_pda} / Next order PDA: ${finalOverlapResult.next_order_pda}`);
 
         return {
             executableStopLossPrice: executableStopLossPrice, // 计算后给出合理的止损值 / Calculated reasonable stop loss value
@@ -279,7 +279,7 @@ async function simulateSellStopLoss(mint, sellTokenAmount, stopLossPrice, mintIn
         };
 
     } catch (error) {
-        console.error('模拟计算做空止损位失败 / Failed to simulate short position stop loss calculation:', error.message);
+        // console.error('模拟计算做空止损位失败 / Failed to simulate short position stop loss calculation:', error.message);
         throw error;
     }
 }

@@ -57,14 +57,14 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
           // 因为被强平了，保证金全部损失，只剩下之前半平仓的利润
           totalProfitSolLamports = realizedSol - order.margin_init_sol_amount;
 
-          console.log('[ClosedOrdersPanel] 做多订单强制清算盈利计算:', {
-            mint,
-            order_id: order.order_id,
-            close_reason: close_info.close_reason,
-            realized_sol_amount: realizedSol,
-            margin_init_sol_amount: order.margin_init_sol_amount,
-            total_profit_lamports: totalProfitSolLamports
-          });
+          // console.log('[ClosedOrdersPanel] 做多订单强制清算盈利计算:', {
+            // mint,
+            // order_id: order.order_id,
+            // close_reason: close_info.close_reason,
+            // realized_sol_amount: realizedSol,
+            // margin_init_sol_amount: order.margin_init_sol_amount,
+            // total_profit_lamports: totalProfitSolLamports
+          // });
         } else {
           // 正常平仓（手动或止盈止损）
           // 2. 计算最后平仓时能赚多少 SOL
@@ -75,10 +75,10 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
           );
 
           if (sellResult === null) {
-            console.error('[ClosedOrdersPanel] sellFromPriceWithTokenInput 返回 null:', {
-              close_price: close_info.close_price,
-              lock_lp_token_amount: order.lock_lp_token_amount
-            });
+            // console.error('[ClosedOrdersPanel] sellFromPriceWithTokenInput 返回 null:', {
+              // close_price: close_info.close_price,
+              // lock_lp_token_amount: order.lock_lp_token_amount
+            // });
             totalProfitSolLamports = 0;
           } else {
             const [, finalSellSol] = sellResult; // 取第二个元素：得到的SOL数量
@@ -86,18 +86,18 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
             // 3. 总获利 = realized_sol_amount + (最后赚取的sol - lock_lp_sol_amount) - margin_init_sol_amount
             totalProfitSolLamports = realizedSol + (Number(finalSellSol) - order.lock_lp_sol_amount) - order.margin_init_sol_amount;
 
-            console.log('[ClosedOrdersPanel] 做多订单正常平仓盈利计算:', {
-              mint,
-              order_id: order.order_id,
-              close_reason: close_info.close_reason,
-              realized_sol_amount: realizedSol,
-              close_price: close_info.close_price,
-              lock_lp_token_amount: order.lock_lp_token_amount,
-              final_sell_sol: Number(finalSellSol),
-              lock_lp_sol_amount: order.lock_lp_sol_amount,
-              margin_init_sol_amount: order.margin_init_sol_amount,
-              total_profit_lamports: totalProfitSolLamports
-            });
+            // console.log('[ClosedOrdersPanel] 做多订单正常平仓盈利计算:', {
+              // mint,
+              // order_id: order.order_id,
+              // close_reason: close_info.close_reason,
+              // realized_sol_amount: realizedSol,
+              // close_price: close_info.close_price,
+              // lock_lp_token_amount: order.lock_lp_token_amount,
+              // final_sell_sol: Number(finalSellSol),
+              // lock_lp_sol_amount: order.lock_lp_sol_amount,
+              // margin_init_sol_amount: order.margin_init_sol_amount,
+              // total_profit_lamports: totalProfitSolLamports
+            // });
           }
         }
       } else if (order.order_type === 2) {
@@ -110,13 +110,13 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
           // 强平：保证金刚好扣完，总获利 = realized_sol_amount
           totalProfitSolLamports = realizedSol - order.margin_sol_amount;
 
-          console.log('[ClosedOrdersPanel] 做空订单强制清算盈利计算:', {
-            mint,
-            order_id: order.order_id,
-            close_reason: close_info.close_reason,
-            realized_sol_amount: realizedSol,
-            total_profit_lamports: totalProfitSolLamports
-          });
+          // console.log('[ClosedOrdersPanel] 做空订单强制清算盈利计算:', {
+            // mint,
+            // order_id: order.order_id,
+            // close_reason: close_info.close_reason,
+            // realized_sol_amount: realizedSol,
+            // total_profit_lamports: totalProfitSolLamports
+          // });
         } else {
           // 正常平仓（手动或止盈止损）
           // 2. borrow_amount: 需要归还的Token数量
@@ -128,10 +128,10 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
           );
 
           if (buyResult === null) {
-            console.error('[ClosedOrdersPanel] buyFromPriceWithTokenOutput 返回 null:', {
-              close_price: close_info.close_price,
-              borrow_amount: order.borrow_amount
-            });
+            // console.error('[ClosedOrdersPanel] buyFromPriceWithTokenOutput 返回 null:', {
+              // close_price: close_info.close_price,
+              // borrow_amount: order.borrow_amount
+            // });
             totalProfitSolLamports = realizedSol;
           } else {
             const [, closeCostSol] = buyResult; // 取第二个元素：平仓需要支付的SOL数量
@@ -142,25 +142,25 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
             // 5. 总获利 = realized_sol_amount + 最后平仓收益
             totalProfitSolLamports = realizedSol + finalProfit;
 
-            console.log('[ClosedOrdersPanel] 做空订单正常平仓盈利计算:', {
-              mint,
-              order_id: order.order_id,
-              close_reason: close_info.close_reason,
-              realized_sol_amount: realizedSol,
-              close_price: close_info.close_price,
-              borrow_amount: order.borrow_amount,
-              close_cost_sol: Number(closeCostSol),
-              margin_sol_amount: order.margin_sol_amount,
-              lock_lp_sol_amount: order.lock_lp_sol_amount,
-              final_profit: finalProfit,
-              total_profit_lamports: totalProfitSolLamports,
-              计算公式: `realized_sol(${realizedSol}) + margin_sol(${order.margin_sol_amount}) - close_cost(${Number(closeCostSol)}) + lock_lp_sol(${order.lock_lp_sol_amount})`
-            });
+            // console.log('[ClosedOrdersPanel] 做空订单正常平仓盈利计算:', {
+              // mint,
+              // order_id: order.order_id,
+              // close_reason: close_info.close_reason,
+              // realized_sol_amount: realizedSol,
+              // close_price: close_info.close_price,
+              // borrow_amount: order.borrow_amount,
+              // close_cost_sol: Number(closeCostSol),
+              // margin_sol_amount: order.margin_sol_amount,
+              // lock_lp_sol_amount: order.lock_lp_sol_amount,
+              // final_profit: finalProfit,
+              // total_profit_lamports: totalProfitSolLamports,
+              // 计算公式: `realized_sol(${realizedSol}) + margin_sol(${order.margin_sol_amount}) - close_cost(${Number(closeCostSol)}) + lock_lp_sol(${order.lock_lp_sol_amount})`
+            // });
           }
         }
       } else {
         // 未知订单类型
-        console.warn('[ClosedOrdersPanel] 未知订单类型:', order.order_type);
+        // console.warn('[ClosedOrdersPanel] 未知订单类型:', order.order_type);
         totalProfitSolLamports = 0;
       }
 
@@ -217,8 +217,8 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
       const historyUrl = `${config.pinpetApiUrl}/api/orderbook/user/${walletAddress}/history?page=1&page_size=1000`;
 
-      console.log('[ClosedOrdersPanel] 正在调用的API URL:', historyUrl);
-      console.log('[ClosedOrdersPanel] walletAddress:', walletAddress);
+      // console.log('[ClosedOrdersPanel] 正在调用的API URL:', historyUrl);
+      // console.log('[ClosedOrdersPanel] walletAddress:', walletAddress);
 
       const response = await fetch(historyUrl, {
         headers: { 'accept': 'application/json' }
@@ -230,11 +230,11 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
       const result = await response.json();
 
-      console.log('[ClosedOrdersPanel] 历史订单接口响应:', {
-        code: result.code,
-        msg: result.msg,
-        订单数量: result.data?.records?.length || 0
-      });
+      // console.log('[ClosedOrdersPanel] 历史订单接口响应:', {
+        // code: result.code,
+        // msg: result.msg,
+        // 订单数量: result.data?.records?.length || 0
+      // });
 
       // 检查响应格式
       if (result.code !== 200) {
@@ -244,7 +244,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
       const records = result.data?.records || [];
 
       if (records.length === 0) {
-        console.log('[ClosedOrdersPanel] 没有历史订单');
+        // console.log('[ClosedOrdersPanel] 没有历史订单');
         setClosedOrders([]);
         setIsLoading(false);
         return;
@@ -253,7 +253,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
       // 提取唯一的 mint 地址
       const uniqueMints = [...new Set(records.map(r => r.mint))];
 
-      console.log('[ClosedOrdersPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
+      // console.log('[ClosedOrdersPanel] 需要获取Token信息的mint数量:', uniqueMints.length);
 
       // 批量获取 Token 详情
       const tokensData = await Promise.all(
@@ -265,7 +265,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
             });
 
             if (!response.ok) {
-              console.warn(`[ClosedOrdersPanel] Token ${mint} 获取失败: ${response.status}`);
+              // console.warn(`[ClosedOrdersPanel] Token ${mint} 获取失败: ${response.status}`);
               return null;
             }
 
@@ -273,13 +273,13 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
 
             // 兼容 code: 200/0 两种格式
             if (result.code !== 200 && result.code !== 0) {
-              console.warn(`[ClosedOrdersPanel] Token ${mint} 响应错误: ${result.message}`);
+              // console.warn(`[ClosedOrdersPanel] Token ${mint} 响应错误: ${result.message}`);
               return null;
             }
 
             return result.data;
           } catch (error) {
-            console.error(`[ClosedOrdersPanel] Token ${mint} 请求失败:`, error);
+            // console.error(`[ClosedOrdersPanel] Token ${mint} 请求失败:`, error);
             return null;
           }
         })
@@ -293,18 +293,18 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
         }
       });
 
-      console.log('[ClosedOrdersPanel] Token数据获取完成:', {
-        请求数量: uniqueMints.length,
-        成功数量: Object.keys(tokenMap).length,
-        失败数量: uniqueMints.length - Object.keys(tokenMap).length
-      });
+      // console.log('[ClosedOrdersPanel] Token数据获取完成:', {
+        // 请求数量: uniqueMints.length,
+        // 成功数量: Object.keys(tokenMap).length,
+        // 失败数量: uniqueMints.length - Object.keys(tokenMap).length
+      // });
 
       const transformedOrders = transformApiData(records, tokenMap);
-      console.log('[ClosedOrdersPanel] 转换后的历史订单数量:', transformedOrders.length);
+      // console.log('[ClosedOrdersPanel] 转换后的历史订单数量:', transformedOrders.length);
       setClosedOrders(transformedOrders);
 
     } catch (error) {
-      console.error('[ClosedOrdersPanel] Failed to fetch closed orders:', error);
+      // console.error('[ClosedOrdersPanel] Failed to fetch closed orders:', error);
       setError(error.message);
       setClosedOrders([]);
     } finally {
@@ -321,7 +321,7 @@ const ClosedOrdersPanel = ({ mintAddress = null }) => {
     try {
       localStorage.setItem('pinpet_closed_orders_filter_mode', newMode);
     } catch (error) {
-      console.warn('[ClosedOrdersPanel] Failed to save filter mode to localStorage:', error);
+      // console.warn('[ClosedOrdersPanel] Failed to save filter mode to localStorage:', error);
     }
   };
 

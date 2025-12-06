@@ -25,7 +25,7 @@ const WebSocketDebug = () => {
     };
 
     const handlePing = () => {
-      console.log('💓 客户端收到 ping 事件');
+      // console.log('💓 客户端收到 ping 事件');
       setDebugInfo(prev => ({
         ...prev,
         pingCount: prev.pingCount + 1,
@@ -34,7 +34,7 @@ const WebSocketDebug = () => {
     };
 
     const handlePong = (latency?: number) => {
-      console.log('💗 客户端收到 pong 事件, 延迟:', latency);
+      // console.log('💗 客户端收到 pong 事件, 延迟:', latency);
       setDebugInfo(prev => ({
         ...prev,
         pongCount: prev.pongCount + 1,

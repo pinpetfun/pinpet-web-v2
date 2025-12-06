@@ -169,7 +169,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
       const oldServerTimeframe = getServerTimeframe(selectedTimeframe);
       const newServerTimeframe = getServerTimeframe(timeframe);
 
-      console.log('🔄 切换时间周期:', { from: oldServerTimeframe, to: newServerTimeframe });
+      // console.log('🔄 切换时间周期:', { from: oldServerTimeframe, to: newServerTimeframe });
 
       // 取消之前的订阅
       unsubscribe(mintAddress, oldServerTimeframe);
@@ -182,7 +182,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
 
       // 重新订阅新的时间周期
       setTimeout(() => {
-        console.log('📤 重新订阅:', { symbol: mintAddress, interval: newServerTimeframe });
+        // console.log('📤 重新订阅:', { symbol: mintAddress, interval: newServerTimeframe });
         subscribe({
           symbol: mintAddress,
           interval: newServerTimeframe,
@@ -192,7 +192,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
 
       // 获取新的历史数据
       setTimeout(() => {
-        console.log('📤 重新请求历史数据:', { symbol: mintAddress, interval: newServerTimeframe });
+        // console.log('📤 重新请求历史数据:', { symbol: mintAddress, interval: newServerTimeframe });
         getHistoryData(mintAddress, newServerTimeframe, 50);
       }, 1500);
     }
@@ -210,7 +210,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
       chartRef.current.priceScale('right').applyOptions({
         mode: mode,
       });
-      console.log('📊 切换坐标类型:', { type, mode });
+      // console.log('📊 切换坐标类型:', { type, mode });
     }
   };
 
@@ -279,7 +279,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
 
     const serverTimeframe = getServerTimeframe(selectedTimeframe);
     
-    console.log('🔄 TradingChart 订阅:', { mintAddress, serverTimeframe });
+    // console.log('🔄 TradingChart 订阅:', { mintAddress, serverTimeframe });
     
     // 订阅实时数据
     setTimeout(() => {
@@ -296,7 +296,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
     }, 2000);
 
     return () => {
-      console.log('🧹 TradingChart 清理订阅:', { mintAddress, serverTimeframe });
+      // console.log('🧹 TradingChart 清理订阅:', { mintAddress, serverTimeframe });
       unsubscribe(mintAddress, serverTimeframe);
     };
   }, [mintAddress, selectedTimeframe, subscribe, unsubscribe, getHistoryData]);
@@ -305,7 +305,12 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
   useEffect(() => {
     if (candlestickSeriesRef.current && klineData.length > 0) {
       candlestickSeriesRef.current.setData(klineData);
-      console.log('✅ 图表已更新数据, 数据点数量:', klineData.length);
+      // console.log('✅ 图表已更新数据, 数据点数量:', klineData.length);
+
+      // 自动适配内容范围，让K线数据填满图表区域
+      if (chartRef.current) {
+        chartRef.current.timeScale().fitContent();
+      }
     }
   }, [klineData]);
 
@@ -318,7 +323,7 @@ const TradingChart = ({ tokenName = "BRONK", _tokenPrice = "0.0000007411", mintA
       // 只处理当前代币和时间周期的数据
       if (symbol === mintAddress && interval === currentServerTimeframe && candlestickSeriesRef.current) {
         candlestickSeriesRef.current.update(newCandle);
-        console.log('📊 图表实时更新:', newCandle);
+        // console.log('📊 图表实时更新:', newCandle);
       }
     };
 
