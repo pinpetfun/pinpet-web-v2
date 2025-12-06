@@ -5,6 +5,7 @@ import { useWalletContext } from '../../contexts/WalletContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { TradingToast } from '../common';
 import { getActualSlippage } from '../../config/tradingConfig';
 
@@ -378,22 +379,41 @@ const SellPanel = React.memo(({
       setIsApproving(true);
       console.log('[SellPanel] Starting approveTrade...');
 
-      // 调用 SDK approveTrade 接口
-      console.log('[SellPanel] Calling sdk.tools.approveTrade...');
+      const connection = sdk.connection || sdk.getConnection();
       const walletPubkey = new PublicKey(walletAddress);
+      const mintPubkey = new PublicKey(mintAddress);
+
+      // 1. 检查 Associated Token Account 是否存在
+      console.log('[SellPanel] Checking if user token account exists...');
+      const userTokenAccount = await getAssociatedTokenAddress(
+        mintPubkey,
+        walletPubkey
+      );
+
+      const tokenAccountInfo = await connection.getAccountInfo(userTokenAccount);
+
+      if (!tokenAccountInfo) {
+        console.log('[SellPanel] ❌ User token account does not exist');
+        showToast('error', `You don't have any ${tokenSymbol} tokens. Cannot approve trading.`);
+        return;
+      }
+
+      console.log('[SellPanel] ✅ User token account exists:', userTokenAccount.toString());
+
+      // 2. 调用 SDK approveTrade 接口
+      console.log('[SellPanel] Calling sdk.tools.approveTrade...');
       const result = await sdk.tools.approveTrade({
         mint: mintAddress,
-        wallet: { publicKey: walletPubkey }  // SDK 期望一个有 publicKey 属性的对象
+        wallet: { publicKey: walletPubkey }
       });
 
       console.log('[SellPanel] approveTrade SDK result:', result);
 
-      // 获取最新的 blockhash
+      // 3. 获取最新的 blockhash
       console.log('[SellPanel] Getting latest blockhash...');
-      const connection = sdk.connection || sdk.getConnection();
       const { blockhash } = await connection.getLatestBlockhash();
       result.transaction.recentBlockhash = blockhash;
-      result.transaction.feePayer = new PublicKey(walletAddress);
+      result.transaction.feePayer = walletPubkey;
 
       console.log('[SellPanel] Updated blockhash:', blockhash);
 
